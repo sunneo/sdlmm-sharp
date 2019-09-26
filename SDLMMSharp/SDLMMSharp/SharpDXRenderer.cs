@@ -431,6 +431,13 @@ namespace SDLMMSharp
         }
         public void Clear(int color)
         {
+            if ((color & 0xff000000) != 0)
+            {
+                lock (_drawReqLock)
+                {
+                    DrawRequests.Clear();
+                }
+            }
             AddDrawRequest((target) =>
             {
                 target.Clear(coveredColor(color));
@@ -724,6 +731,16 @@ namespace SDLMMSharp
         }
         public void fillEllipse(int x, int y, int w, int h, int color)
         {
+            if ((color & 0xff000000) != 0)
+            {
+                if (x <= -3 && y <= -3 && w >= this.Width+6 && h >= this.Height+6)
+                {
+                    lock (_drawReqLock)
+                    {
+                        DrawRequests.Clear();
+                    }
+                }
+            }
             AddDrawRequest((target) =>
             {
                 using (var brush = GetBrushFromColor(target, color))
@@ -805,6 +822,18 @@ namespace SDLMMSharp
         }
         public void fillRect(int x, int y, int w, int h, int color)
         {
+            
+            if ((color & 0xff000000) != 0)
+            {
+                if (x <= 0 && y <= 0 && w >= this.Width && h >= this.Height)
+                {
+                    lock (_drawReqLock)
+                    {
+                        DrawRequests.Clear();
+                    }     
+                }
+            }
+            
             AddDrawRequest((target) =>
             {
                 using (var brush = GetBrushFromColor(target, color))
