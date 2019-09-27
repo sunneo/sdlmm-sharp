@@ -85,6 +85,8 @@
     <Compile Include="CustomControl\SliderCheckbox.Designer.cs">
       <DependentUpon>SliderCheckbox.cs</DependentUpon>
     </Compile>
+    <Compile Include="GraphicsWrapper.cs" />
+    <Compile Include="IGraphics.cs" />
     <Compile Include="IRenderer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

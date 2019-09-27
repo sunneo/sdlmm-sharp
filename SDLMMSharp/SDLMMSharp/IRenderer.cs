@@ -13,8 +13,15 @@ namespace SDLMMSharp
         public delegate void OnMouseWhellAction(int x, int y, int scrollAmount);
         public delegate void OnKeyboardAction(int keycode, bool ctrl, bool ison);
     }
+    
     public interface IRenderer:IDisposable
     {
+        IGraphics GetGraphics();
+        System.Drawing.Drawing2D.CompositingMode CompositingMode { get; set; }
+        System.Drawing.Drawing2D.CompositingQuality CompositingQuality { get; set; }
+        System.Drawing.Drawing2D.InterpolationMode InterpolationMode { get; set; }
+        System.Drawing.Drawing2D.SmoothingMode SmoothingMode { get; set; }
+        System.Drawing.Text.TextRenderingHint TextRenderingHint { get; set; }
         IRendererDelegates.OnMouseButtonAction onMouseClickHandler { get; set; }
         IRendererDelegates.OnMouseMoveAction onMouseMoveHandler { get; set; }
         IRendererDelegates.OnKeyboardAction onKeyboard { get; set; }
@@ -24,8 +31,8 @@ namespace SDLMMSharp
         void setUseAlpha(bool buse);
         void Clear(int color);
         void drawPixels(int[] pixels, int x, int y, int w, int h);
-        void drawImage(System.Drawing.Bitmap bmp, int x, int y, int w, int h, float alpha);
-        void drawImage(System.Drawing.Bitmap bmp, int x, int y, int w, int h);
+        void drawImage(System.Drawing.Image bmp, int x, int y, int w, int h, float alpha);
+        void drawImage(System.Drawing.Image bmp, int x, int y, int w, int h);
 
         void drawString(String str, int x, int y, int color, System.Drawing.Font font = null);
         void drawString(String str, System.Drawing.Rectangle rect, int color, System.Drawing.Font font = null);
@@ -58,6 +65,14 @@ namespace SDLMMSharp
         void fillRoundRect(System.Drawing.Rectangle r, float rad, System.Drawing.Brush brush);
         void fillRoundRect(System.Drawing.Point position, System.Drawing.Size size, float rad, int color);
         void fillRoundRect(System.Drawing.Point position, System.Drawing.Size size, float rad, System.Drawing.Brush brush);
+
+        void fillPolygon(System.Drawing.Point[] points, int color, int offsetX = 0, int offsetY = 0);
+        void fillPolygon(System.Drawing.PointF[] points, int color, int offsetX = 0, int offsetY = 0);
+        void fillPolygon(System.Drawing.Point[] points, System.Drawing.Brush gdibrush, int offsetX = 0, int offsetY = 0);
+        void fillPolygon(System.Drawing.PointF[] points, System.Drawing.Brush gdibrush, int offsetX = 0, int offsetY = 0);
+        void drawPolygon(System.Drawing.Point[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0);
+        void drawPolygon(System.Drawing.PointF[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0);
+ 
 
         System.Drawing.Bitmap flushToBMP(int left, int top, int w, int h);
         System.Drawing.Bitmap flushToBMP();

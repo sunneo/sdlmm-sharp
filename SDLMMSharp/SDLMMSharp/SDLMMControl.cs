@@ -1100,7 +1100,7 @@ namespace SDLMMSharp
             pixels = outputPixels;
 #endif
         }
-        public void drawImage(Bitmap bmp, int x, int y, int w, int h)
+        public void drawImage(Image bmp, int x, int y, int w, int h)
         {
             lock (drawImageLocker)
             {
@@ -1207,21 +1207,34 @@ namespace SDLMMSharp
             }
         }
         object drawImageLocker = new object();
-        public void drawImage(Bitmap bmp, int x, int y, int w, int h, float alpha)
+        public void drawImage(System.Drawing.Image _bmp, int x, int y, int w, int h, float alpha)
         {
             hasDrawRequest = true;
             if (alpha >= 1)
             {
-                drawImage(bmp, x, y, w, h);
+                drawImage(_bmp, x, y, w, h);
                 return;
+            }
+            System.Drawing.Bitmap bmp = null;
+            bool needDispose = false;
+            if (_bmp is System.Drawing.Bitmap)
+            {
+                bmp = _bmp as System.Drawing.Bitmap;
+            }
+            else
+            {
+                bmp = new Bitmap(_bmp);
+                needDispose = true;
             }
             Bitmap newBmp = new Bitmap(bmp);
             lock (drawImageLocker)
             {
                 if (alpha < 0) alpha = 0;
                 int Length = bmp.Width * bmp.Height;
+
                 Bitmap bmp2 = bmp;
-                if (bmp.PixelFormat != PixelFormat.Format32bppArgb)
+                
+                if ( bmp.PixelFormat != PixelFormat.Format32bppArgb)
                 {
                     bmp2 = bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), PixelFormat.Format32bppArgb);
                 }
@@ -1244,6 +1257,10 @@ namespace SDLMMSharp
                 }
                 UnlockBitmapData(bmp2, bmpData0);
                 UnlockBitmapData(newBmp, bmpData);
+            }
+            if (needDispose)
+            {
+                bmp.Dispose();
             }
             drawImage(newBmp, x, y, w, h);
         }
@@ -1328,6 +1345,84 @@ namespace SDLMMSharp
                 catch (Exception)
                 {
 
+                }
+            }
+        }
+        GraphicsPath MakePolygonPath(Point[] points)
+        {
+            GraphicsPath ret = new GraphicsPath();
+            ret.AddPolygon(points);
+            return ret;
+        }
+        GraphicsPath MakePolygonPath(PointF[] points)
+        {
+            GraphicsPath ret = new GraphicsPath();
+            ret.AddPolygon(points);
+            return ret;
+        }
+        public void fillPolygon(PointF[] points, int color, int offsetX = 0, int offsetY = 0)
+        {
+            fillPolygon(points, GetBrushFromColor(color), offsetX, offsetY);
+        }
+        public void fillPolygon(Point[] points, int color, int offsetX = 0, int offsetY = 0)
+        {
+            fillPolygon(points, GetBrushFromColor(color), offsetX, offsetY);
+        }
+        public void fillPolygon(PointF[] points, Brush brush, int offsetX = 0, int offsetY = 0)
+        {
+            hasDrawRequest = true;
+            GraphicsPath path = MakePolygonPath(points);
+            graphic.TranslateTransform(offsetX, offsetY);
+            graphic.FillPath(brush, path);
+            graphic.TranslateTransform(-offsetX, -offsetY);
+        }
+        public void fillPolygon(Point[] points, Brush brush, int offsetX = 0, int offsetY = 0)
+        {
+            hasDrawRequest = true;
+            GraphicsPath path = MakePolygonPath(points);
+            graphic.TranslateTransform(offsetX, offsetY);
+            graphic.FillPath(brush, path);
+            graphic.TranslateTransform(-offsetX, -offsetY);
+        }
+        public void drawPolygon(PointF[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0)
+        {
+            hasDrawRequest = true;
+            //lock (canvas)
+            {
+
+                using (Pen pen = GetPenFromColor(color, width))
+                {
+                    if (dashed)
+                    {
+                        pen.DashStyle = DashStyle.DashDotDot;
+                        pen.DashPattern = drawRectDefaultDashPattern;
+                    }
+                    GraphicsPath path = MakePolygonPath(points);
+                    Point orig = graphic.RenderingOrigin;
+                    graphic.TranslateTransform(offsetX, offsetY);
+                    graphic.DrawPath(pen, path);
+                    graphic.TranslateTransform(-offsetX, -offsetY);
+                }
+            }
+        }
+        public void drawPolygon(Point[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0)
+        {
+            hasDrawRequest = true;
+            //lock (canvas)
+            {
+
+                using (Pen pen = GetPenFromColor(color, width))
+                {
+                    if (dashed)
+                    {
+                        pen.DashStyle = DashStyle.DashDotDot;
+                        pen.DashPattern = drawRectDefaultDashPattern;
+                    }
+                    GraphicsPath path = MakePolygonPath(points);
+                    Point orig = graphic.RenderingOrigin;
+                    graphic.TranslateTransform(offsetX, offsetY);
+                    graphic.DrawPath(pen, path);
+                    graphic.TranslateTransform(-offsetX, -offsetY);
                 }
             }
         }
@@ -1550,13 +1645,41 @@ namespace SDLMMSharp
                     {
                         graphic = Graphics.FromImage(canvas);
                     }
+                    graphic.CompositingMode = CompositingMode;
                     graphic.InterpolationMode = setInterpolationMode;
                     graphic.SmoothingMode = setSmoothMode;
                     graphic.TextRenderingHint = setTextRenderHint;
                 }
             }
         }
+        public IGraphics GetGraphics()
+        {
+            return new GraphicsWrapper(this);
+        }
 
+        public CompositingMode CompositingMode
+        {
+            get;
+            set;
+        }
+
+        public CompositingQuality CompositingQuality
+        {
+            get;
+            set;
+        }
+
+        public SmoothingMode SmoothingMode
+        {
+            get
+            {
+                return setSmoothMode;
+            }
+            set
+            {
+                setSmoothMode = value;
+            }
+        }
     }
     public class SolidBrushDictionary<key, type>
     {

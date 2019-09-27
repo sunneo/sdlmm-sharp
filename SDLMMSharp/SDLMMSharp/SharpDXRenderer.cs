@@ -30,9 +30,9 @@ namespace SDLMMSharp
         public static readonly int MOUSE_LEFT = 0;
         public static readonly int MOUSE_MIDDLE = 1;
         public static readonly int MOUSE_RIGHT = 2;
-        public System.Drawing.Drawing2D.SmoothingMode SmoothMode = System.Drawing.Drawing2D.SmoothingMode.Default;
-        public System.Drawing.Text.TextRenderingHint TextRenderingHint = System.Drawing.Text.TextRenderingHint.SystemDefault;
-        public System.Drawing.Drawing2D.InterpolationMode InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
+        System.Drawing.Drawing2D.SmoothingMode mSmoothMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+        System.Drawing.Text.TextRenderingHint mTextRenderingHint = System.Drawing.Text.TextRenderingHint.SystemDefault;
+        System.Drawing.Drawing2D.InterpolationMode mInterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
         bool useAlpha = true;
         public SharpDXControl()
         {
@@ -544,10 +544,21 @@ namespace SDLMMSharp
         {
             fillRoundRect(position.X, position.Y, size.Width, size.Height, rad, rad, brush);
         }
-        public void drawImage(System.Drawing.Bitmap bmp, int x, int y, int w, int h, float alpha)
+        public void drawImage(System.Drawing.Image _bmp, int x, int y, int w, int h, float alpha)
         {
             AddDrawRequest((target) =>
             {
+                System.Drawing.Bitmap bmp = null;
+                bool needDispose = false;
+                if (_bmp is System.Drawing.Bitmap)
+                {
+                    bmp = _bmp as System.Drawing.Bitmap;
+                }
+                else
+                {
+                    bmp = new System.Drawing.Bitmap(_bmp);
+                    needDispose = true;
+                }
                 var mem = bmp.LockBits(new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
                 var bitmapProperties = new BitmapProperties(new PixelFormat(Format.B8G8R8A8_UNorm, AlphaMode.Ignore));
                 using (Bitmap gameBitmap = new Bitmap(d2dRenderTarget, new Size2(bmp.Width, bmp.Height), bitmapProperties))
@@ -556,10 +567,168 @@ namespace SDLMMSharp
                     d2dRenderTarget.DrawBitmap(gameBitmap, new RawRectangleF(x, y, x + w, y + h), alpha, BitmapInterpolationMode.NearestNeighbor);
                 }
                 bmp.UnlockBits(mem);
+                if (needDispose)
+                {
+                    bmp.Dispose();
+                }
             });
 
         }
-        public void drawImage(System.Drawing.Bitmap bmp, int x, int y, int w, int h)
+        public void fillPolygon(System.Drawing.Point[] points, int color, int offsetX = 0, int offsetY = 0)
+        {
+            AddDrawRequest((target) =>
+            {
+                var brush = GetBrushFromColor(target, color);
+                if (brush != null)
+                {
+                    dxFillPolygon(target, points, brush, offsetX, offsetY);
+                    brush.Dispose();
+                }
+            });
+        }
+        public void fillPolygon(System.Drawing.PointF[] points, int color, int offsetX = 0, int offsetY = 0)
+        {
+            AddDrawRequest((target) =>
+            {
+                var brush = GetBrushFromColor(target, color);
+                if (brush != null)
+                {
+                    dxFillPolygon(target, points, brush, offsetX, offsetY);
+                    brush.Dispose();
+                }
+            });
+        }
+        static RawVector2 Vector2FromGDIPoint(System.Drawing.Point pt, int offsetx = 0, int offsety = 0)
+        {
+            return new RawVector2(pt.X+offsetx, pt.Y+offsety);
+        }
+        static RawVector2 Vector2FromGDIPoint(System.Drawing.PointF pt,int offsetx=0,int offsety=0)
+        {
+            return new RawVector2(pt.X + offsetx, pt.Y + offsety);
+        }
+        static RawVector2[] Vector2sFromGDIPoints(System.Drawing.Point[] pts, int startIdx=0, int offsetx = 0, int offsety = 0)
+        {
+            RawVector2[] ret = new RawVector2[pts.Length];
+            for (int i = startIdx; i < pts.Length; ++i)
+            {
+                ret[i] = Vector2FromGDIPoint(pts[i],offsetx,offsety);
+            }
+            return ret;
+        }
+        static RawVector2[] Vector2sFromGDIPoints(System.Drawing.PointF[] pts, int startIdx = 0, int offsetx = 0, int offsety = 0)
+        {
+            RawVector2[] ret = new RawVector2[pts.Length];
+            for (int i = startIdx; i < pts.Length; ++i)
+            {
+                ret[i] = Vector2FromGDIPoint(pts[i], offsetx, offsety);
+            }
+            return ret;
+        }
+        void dxFillPolygon(RenderTarget target, System.Drawing.PointF[] points, Brush brush, int offsetX = 0, int offsetY = 0)
+        {
+            PathGeometry geo = new PathGeometry(target.Factory);
+            RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
+            var sink1 = geo.Open();
+            sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+            sink1.AddLines(path);
+            sink1.EndFigure(new FigureEnd());
+            sink1.Close();
+            target.FillGeometry(geo, brush);
+        }
+        void dxFillPolygon(RenderTarget target, System.Drawing.Point[] points, Brush brush, int offsetX = 0, int offsetY = 0)
+        {
+            PathGeometry geo = new PathGeometry(target.Factory);
+            RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
+            var sink1 = geo.Open();
+            sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+            sink1.AddLines(path);
+            sink1.EndFigure(new FigureEnd());
+            sink1.Close();
+            target.FillGeometry(geo, brush);
+        }
+        public void fillPolygon(System.Drawing.Point[] points, System.Drawing.Brush gdibrush, int offsetX = 0, int offsetY = 0)
+        {
+            var param = BrushParamFromGDIBrush(gdibrush);
+            lock (_drawReqLock)
+            {
+                BrushParams.Add(param);
+            }
+            AddDrawRequest((target) =>
+            {
+                var brush = param.GetBrush(target);
+                if (brush != null)
+                {
+                    dxFillPolygon(target, points, brush, offsetX, offsetY);
+                    brush.Dispose();
+                }
+            });
+          
+        }
+        public void fillPolygon(System.Drawing.PointF[] points, System.Drawing.Brush gdibrush, int offsetX = 0, int offsetY = 0)
+        {
+            var param = BrushParamFromGDIBrush(gdibrush);
+            lock (_drawReqLock)
+            {
+                BrushParams.Add(param);
+            }
+            AddDrawRequest((target) =>
+            {
+                var brush = param.GetBrush(target);
+                if (brush != null)
+                {
+                    dxFillPolygon(target, points, brush, offsetX, offsetY);
+                    brush.Dispose();
+                }
+            });
+
+        }
+        public void drawPolygon(System.Drawing.Point[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0)
+        {
+            RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
+            
+            AddDrawRequest((target) =>
+            {
+                PathGeometry geo = new PathGeometry(target.Factory);
+                var sink1 = geo.Open();
+                sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+                sink1.AddLines(path);
+                sink1.EndFigure(new FigureEnd());
+                sink1.Close();
+                if (dashed)
+                {
+                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width, GetDashedStyle(target));
+                }
+                else
+                {
+                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width);
+                }
+                
+            });
+        }
+        public void drawPolygon(System.Drawing.PointF[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0)
+        {
+            RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
+
+            AddDrawRequest((target) =>
+            {
+                PathGeometry geo = new PathGeometry(target.Factory);
+                var sink1 = geo.Open();
+                sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+                sink1.AddLines(path);
+                sink1.EndFigure(new FigureEnd());
+                sink1.Close();
+                if (dashed)
+                {
+                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width, GetDashedStyle(target));
+                }
+                else
+                {
+                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width);
+                }
+
+            });
+        }
+        public void drawImage(System.Drawing.Image bmp, int x, int y, int w, int h)
         {
             drawImage(bmp, x, y, w, h, 1.0f);
         }
@@ -946,6 +1115,67 @@ namespace SDLMMSharp
         {
             base.OnPaintBackground(e);
 
+        }
+        public IGraphics GetGraphics()
+        {
+            return new GraphicsWrapper(this);
+        }
+        public System.Drawing.Drawing2D.CompositingMode CompositingMode
+        {
+            get;
+            set;
+        }
+
+        public System.Drawing.Drawing2D.CompositingQuality CompositingQuality
+        {
+            get;
+            set;
+        }
+
+        public System.Drawing.Drawing2D.InterpolationMode InterpolationMode
+        {
+            get
+            {
+                return mInterpolationMode;
+            }
+            set
+            {
+                mInterpolationMode = value;
+            }
+        }
+
+        public System.Drawing.Drawing2D.SmoothingMode SmoothingMode
+        {
+            get
+            {
+                return mSmoothMode;
+            }
+            set
+            {
+                mSmoothMode = value;
+            }
+        }
+        public System.Drawing.Drawing2D.SmoothingMode SmoothMode
+        {
+            get
+            {
+                return mSmoothMode;
+            }
+            set
+            {
+                mSmoothMode = value;
+            }
+        }
+        public System.Drawing.Text.TextRenderingHint TextRenderingHint
+        {
+            get
+            {
+                return mTextRenderingHint;
+            }
+            set
+            {
+                mTextRenderingHint = value;
+            }
         }
     }
 }
