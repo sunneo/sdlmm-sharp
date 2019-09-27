@@ -601,7 +601,7 @@ namespace SDLMMSharp
                         SharpDX.DirectWrite.TextFormat stringFormat = new SharpDX.DirectWrite.TextFormat(this.FactoryDWrite, font.FontFamily.Name, weight, style, font.Size);
                         stringFormat.TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading;
                         stringFormat.WordWrapping = SharpDX.DirectWrite.WordWrapping.NoWrap;
-                        target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush);
+                        target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont);
                         stringFormat.Dispose();
                     }
                 }
