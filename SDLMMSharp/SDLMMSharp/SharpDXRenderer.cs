@@ -38,6 +38,11 @@ namespace SDLMMSharp
         {
             ///this.DoubleBuffered = true;
         }
+        public SharpDXControl(int width,int height)
+        {
+            ///this.DoubleBuffered = true;
+            this.Size = new System.Drawing.Size(width, height);
+        }
         protected override void OnInvalidated(InvalidateEventArgs e)
         {
             base.OnInvalidated(e);
