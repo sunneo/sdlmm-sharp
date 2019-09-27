@@ -383,27 +383,30 @@ namespace SDLMMSharp
         volatile bool m_Ready = false;
         void Draw()
         {
+			if(InvokeRequired){
+				this.Invoke(new Action(Draw));
+				return;
+			}
             lock (_drawLock)
             {
                 if (!m_Ready) return;
-                d2dRenderTarget.BeginDraw();
-
                 lock (_drawReqLock)
                 {
                     if (DrawRequests.Count > 0)
                     {
+						d2dRenderTarget.BeginDraw();
                         foreach (Action<RenderTarget> req in DrawRequests)
                         {
                             req(d2dRenderTarget);
                         }
                         DrawRequestFlushed = true;
+						this.d2dRenderTarget.Flush();
+                        d2dRenderTarget.EndDraw();
                     }
-
                 }
-                this.d2dRenderTarget.Flush();
-                d2dRenderTarget.EndDraw();
-
+				swapChain.Present(0, PresentFlags.None);
             }
+			
         }
 
         List<Action<RenderTarget>> DrawRequests = new List<Action<RenderTarget>>();
