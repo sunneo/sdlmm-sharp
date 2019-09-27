@@ -559,7 +559,19 @@ namespace SDLMMSharp
                     bmp = new System.Drawing.Bitmap(_bmp);
                     needDispose = true;
                 }
+                if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppPArgb && bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
+                {
+                    needDispose = true;
+                    System.Drawing.Bitmap newBmp = new System.Drawing.Bitmap(_bmp.Width,_bmp.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(newBmp))
+                    {
+                        g.DrawImage(_bmp, 0, 0, newBmp.Width, newBmp.Height);
+                        g.Flush();
+                    }
+                    bmp = newBmp;
+                }
                 var mem = bmp.LockBits(new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+                
                 var bitmapProperties = new BitmapProperties(new PixelFormat(Format.B8G8R8A8_UNorm, AlphaMode.Ignore));
                 using (Bitmap gameBitmap = new Bitmap(d2dRenderTarget, new Size2(bmp.Width, bmp.Height), bitmapProperties))
                 {
