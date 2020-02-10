@@ -183,10 +183,11 @@ namespace SDLMMSharp
                 this.height = height;
                 wicFactory = new SharpDX.WIC.ImagingFactory();
                 d2dFactory = new SharpDX.Direct2D1.Factory();
+                
                 wicBitmap = new SharpDX.WIC.Bitmap(wicFactory, width, height, SharpDX.WIC.PixelFormat.Format32bppBGR, SharpDX.WIC.BitmapCreateCacheOption.CacheOnLoad);
                 renderTargetProperties = new RenderTargetProperties(RenderTargetType.Default, new PixelFormat(Format.Unknown, AlphaMode.Unknown), 0, 0, RenderTargetUsage.None, SharpDX.Direct2D1.FeatureLevel.Level_DEFAULT);
                 d2dRenderTarget = new WicRenderTarget(d2dFactory, wicBitmap, renderTargetProperties);
-
+                
             }
 
             public void Dispose()
@@ -306,6 +307,8 @@ namespace SDLMMSharp
                     factory.Dispose();
                     backBuffer.Dispose();
                     m_Ready = true;
+                    FactoryDWrite2 = new SharpDX.DirectWrite.Factory2(FactoryDWrite.NativePointer);
+                    SharpDX.DirectWrite.FontFallbackBuilder builder = FactoryDWrite2.QueryInterface<SharpDX.DirectWrite.FontFallbackBuilder>();
                 }
             }
             catch (Exception ee)
@@ -364,6 +367,7 @@ namespace SDLMMSharp
         }
         SharpDX.DirectWrite.TextFormat m_TextFormat;
         SharpDX.DirectWrite.Factory FactoryDWrite = new SharpDX.DirectWrite.Factory();
+        SharpDX.DirectWrite.Factory2 FactoryDWrite2;
         protected override void OnFontChanged(EventArgs e)
         {
             base.OnFontChanged(e);
@@ -398,6 +402,7 @@ namespace SDLMMSharp
                         foreach (Action<RenderTarget> req in DrawRequests)
                         {
                             req(d2dRenderTarget);
+                            
                         }
                         DrawRequestFlushed = true;
 						this.d2dRenderTarget.Flush();
@@ -790,6 +795,8 @@ namespace SDLMMSharp
                         SharpDX.DirectWrite.TextFormat stringFormat = new SharpDX.DirectWrite.TextFormat(this.FactoryDWrite, font.FontFamily.Name, weight, style, font.Size);
                         stringFormat.TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading;
                         stringFormat.WordWrapping = SharpDX.DirectWrite.WordWrapping.Wrap;
+
+                        
                         target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont);
                         stringFormat.Dispose();
                     }
