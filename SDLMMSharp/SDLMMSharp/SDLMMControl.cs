@@ -1445,8 +1445,10 @@ namespace SDLMMSharp
                         stringFormat.Alignment = StringAlignment.Center;
                         stringFormat.LineAlignment = StringAlignment.Center;
                         stringFormat.FormatFlags = StringFormatFlags.NoClip;
+                        graphic.Clip = new System.Drawing.Region(rect);
                         graphic.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                         graphic.DrawString(str, font, brush, rect, stringFormat);
+                        graphic.Clip = new System.Drawing.Region(this.ClientRectangle);
                     }
                 }
                 catch (Exception)
