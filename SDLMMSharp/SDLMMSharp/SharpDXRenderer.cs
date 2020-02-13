@@ -1194,5 +1194,22 @@ namespace SDLMMSharp
                 mTextRenderingHint = value;
             }
         }
+
+
+        public void SetClipping(System.Drawing.Rectangle rect)
+        {
+            AddDrawRequest((target) =>
+               {
+                   target.PushAxisAlignedClip(new RectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), AntialiasMode.Aliased);
+               });
+        }
+
+        public void UnsetClipping()
+        {
+            AddDrawRequest((target) =>
+            {
+                target.PopAxisAlignedClip();
+            });
+        }
     }
 }

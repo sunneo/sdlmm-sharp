@@ -1445,10 +1445,13 @@ namespace SDLMMSharp
                         stringFormat.Alignment = StringAlignment.Center;
                         stringFormat.LineAlignment = StringAlignment.Center;
                         stringFormat.FormatFlags = StringFormatFlags.NoClip;
-                        graphic.Clip = new System.Drawing.Region(rect);
+                        RectangleF orig = graphic.ClipBounds;
+                        RectangleF newRect = new RectangleF(rect.X, rect.Y, rect.Width, rect.Height);
+                        newRect.Intersect(orig);
+                        graphic.Clip = new System.Drawing.Region(newRect);
                         graphic.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                         graphic.DrawString(str, font, brush, rect, stringFormat);
-                        graphic.Clip = new System.Drawing.Region(this.ClientRectangle);
+                        graphic.Clip = new System.Drawing.Region(orig);
                     }
                 }
                 catch (Exception)
@@ -1647,6 +1650,7 @@ namespace SDLMMSharp
                     {
                         graphic = Graphics.FromImage(canvas);
                     }
+                    graphic.Clip = new System.Drawing.Region(this.ClientRectangle);
                     graphic.CompositingMode = CompositingMode;
                     graphic.InterpolationMode = setInterpolationMode;
                     graphic.SmoothingMode = setSmoothMode;
@@ -1681,6 +1685,16 @@ namespace SDLMMSharp
             {
                 setSmoothMode = value;
             }
+        }
+
+
+        public void SetClipping(Rectangle rect)
+        {
+            graphic.Clip = new System.Drawing.Region(rect);
+        }
+        public void UnsetClipping()
+        {
+            graphic.Clip = new System.Drawing.Region(this.ClientRectangle);
         }
     }
     public class SolidBrushDictionary<key, type>

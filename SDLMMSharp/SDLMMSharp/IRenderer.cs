@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -34,6 +35,8 @@ namespace SDLMMSharp
         void drawImage(System.Drawing.Image bmp, int x, int y, int w, int h, float alpha);
         void drawImage(System.Drawing.Image bmp, int x, int y, int w, int h);
 
+        void SetClipping(Rectangle rect);
+        void UnsetClipping();
         void drawString(String str, int x, int y, int color, System.Drawing.Font font = null);
         void drawString(String str, System.Drawing.Rectangle rect, int color, System.Drawing.Font font = null);
         void drawLine(int x0, int y0, int x1, int y1, int color, int width);
