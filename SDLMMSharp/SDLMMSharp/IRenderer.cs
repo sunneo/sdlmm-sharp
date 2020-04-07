@@ -79,6 +79,7 @@ namespace SDLMMSharp
 
         System.Drawing.Bitmap flushToBMP(int left, int top, int w, int h);
         System.Drawing.Bitmap flushToBMP();
+        void disposeImage(Image image);
         System.Drawing.SizeF MeasureString(String s, System.Drawing.Font font = null, int maxsize = -1);
         void flush();
 

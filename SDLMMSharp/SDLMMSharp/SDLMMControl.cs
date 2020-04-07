@@ -1623,7 +1623,20 @@ namespace SDLMMSharp
 
             drawPixels(toDraw, tx, ty, w, h);
         }
+        public void disposeImage(Image image)
+        {
+            try
+            {
+                if (image != null)
+                {
+                    image.Dispose();
+                }
+            }
+            catch (Exception ee)
+            {
 
+            }
+        }
         private void SDLMMControl_SizeChanged(object sender, EventArgs e)
         {
             lock (canvas)

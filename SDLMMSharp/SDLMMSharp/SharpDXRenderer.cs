@@ -800,6 +800,23 @@ namespace SDLMMSharp
 
 
         }
+        public void disposeImage(System.Drawing.Image image)
+        {
+            AddDrawRequest((target) =>
+            {
+                try
+                {
+                    if (image != null)
+                    {
+                        image.Dispose();
+                    }
+                }
+                catch (Exception ee)
+                {
+
+                }
+            });
+        }
         public void drawLine(int x0, int y0, int x1, int y1, int color, int width)
         {
             AddDrawRequest((target) =>
@@ -1086,9 +1103,9 @@ namespace SDLMMSharp
             }
 
         }
-        public System.Drawing.Bitmap flushToBMP()
+        public System.Drawing.Bitmap flushToBMP(int width,int height)
         {
-            using (var dxgi = new DXGI2DContext(this.Width, this.Height))
+            using (var dxgi = new DXGI2DContext(width, height))
             {
                 RenderTarget current = this.d2dRenderTarget;
                 this.d2dRenderTarget = dxgi.RenderTarget;
@@ -1097,9 +1114,13 @@ namespace SDLMMSharp
                 return dxgi.FlushToBitmap();
             }
         }
+        public System.Drawing.Bitmap flushToBMP()
+        {
+            return flushToBMP(this.Width, this.Height);
+        }
         public System.Drawing.Bitmap flushToBMP(int left, int top, int w, int h)
         {
-            using (var bmp = flushToBMP())
+            using (var bmp = flushToBMP(w,h))
             {
                 return bmp.Clone(new System.Drawing.Rectangle(left, top, w, h), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             }
