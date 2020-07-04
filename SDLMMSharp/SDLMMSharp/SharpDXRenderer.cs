@@ -791,7 +791,7 @@ namespace SDLMMSharp
                         stringFormat.TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading;
                         stringFormat.WordWrapping = SharpDX.DirectWrite.WordWrapping.Wrap;
                         target.PushAxisAlignedClip(new RectangleF(rect.X, rect.Y, rect.Right, rect.Bottom),AntialiasMode.Aliased);
-                        target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont);
+                        target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont| DrawTextOptions.Clip);
                         target.PopAxisAlignedClip();
                         stringFormat.Dispose();
                     }

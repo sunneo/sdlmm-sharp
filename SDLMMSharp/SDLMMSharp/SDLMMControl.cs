@@ -1442,8 +1442,8 @@ namespace SDLMMSharp
                     if (!String.IsNullOrEmpty(str))
                     {
                         StringFormat stringFormat = new StringFormat();
-                        stringFormat.Alignment = StringAlignment.Center;
-                        stringFormat.LineAlignment = StringAlignment.Center;
+                        stringFormat.Alignment = StringAlignment.Near;
+                        stringFormat.LineAlignment = StringAlignment.Near;
                         stringFormat.FormatFlags = StringFormatFlags.NoClip;
                         RectangleF orig = graphic.ClipBounds;
                         RectangleF newRect = new RectangleF(rect.X, rect.Y, rect.Width, rect.Height);
