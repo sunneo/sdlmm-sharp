@@ -1709,6 +1709,17 @@ namespace SDLMMSharp
         {
             graphic.Clip = new System.Drawing.Region(this.ClientRectangle);
         }
+
+        Dictionary<String, Object> pushedArgument = new Dictionary<string, object>();
+        public void setArgument(string key, object val)
+        {
+            pushedArgument[key] = val;
+        }
+
+        public void unsetArgument(string key)
+        {
+            pushedArgument.Remove(key);
+        }
     }
     public class SolidBrushDictionary<key, type>
     {

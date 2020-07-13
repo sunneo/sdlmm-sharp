@@ -12,12 +12,17 @@ using SharpDX.Mathematics.Interop;
 using Resource = SharpDX.Direct3D11.Resource;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace SDLMMSharp
 {
 
     public class SharpDXControl : UserControl, IRenderer
     {
+        public class SpecialArguments
+        {
+            public const String TrimOutOfBound = "TrimOutOfBounds";
+        }
         Device device;
         SwapChain swapChain;
         Surface surface;
@@ -462,6 +467,8 @@ namespace SDLMMSharp
                 {
                     maxsize = this.Width;
                 }
+                format.WordWrapping = SharpDX.DirectWrite.WordWrapping.Wrap;
+
                 using (SharpDX.DirectWrite.TextLayout layout =
             new SharpDX.DirectWrite.TextLayout(FactoryDWrite, s, format, maxsize, font.Height))
                 {
@@ -781,24 +788,64 @@ namespace SDLMMSharp
 
             AddDrawRequest((target) =>
             {
-                if (!String.IsNullOrEmpty(str))
-                {
-                    using (Brush brush = GetBrushFromColor(target, color))
-                    {
-                        SharpDX.DirectWrite.FontWeight weight = WeightFromFontStyle(font.Style);
-                        SharpDX.DirectWrite.FontStyle style = StyleFromFontStyle(font.Style);
-                        SharpDX.DirectWrite.TextFormat stringFormat = new SharpDX.DirectWrite.TextFormat(this.FactoryDWrite, font.FontFamily.Name, weight, style, font.Size);
-                        stringFormat.TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading;
-                        stringFormat.WordWrapping = SharpDX.DirectWrite.WordWrapping.Wrap;
-                        target.PushAxisAlignedClip(new RectangleF(rect.X, rect.Y, rect.Right, rect.Bottom),AntialiasMode.Aliased);
-                        target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont| DrawTextOptions.Clip);
-                        target.PopAxisAlignedClip();
-                        stringFormat.Dispose();
-                    }
-                }
+                HandleDrawString(target,str,rect,color,font);
             });
 
 
+        }
+        private void HandleDrawString(RenderTarget target,String str, System.Drawing.Rectangle rect, int color, System.Drawing.Font font = null)
+        {
+            if (String.IsNullOrEmpty(str)) return;
+            
+            using (Brush brush = GetBrushFromColor(target, color))
+            {
+                SharpDX.DirectWrite.FontWeight weight = WeightFromFontStyle(font.Style);
+                SharpDX.DirectWrite.FontStyle style = StyleFromFontStyle(font.Style);
+                SharpDX.DirectWrite.TextFormat stringFormat = new SharpDX.DirectWrite.TextFormat(this.FactoryDWrite, font.FontFamily.Name, weight, style, font.Size);
+                stringFormat.TextAlignment = SharpDX.DirectWrite.TextAlignment.Leading;
+                stringFormat.WordWrapping = SharpDX.DirectWrite.WordWrapping.Wrap;
+
+                if (font == null) font = this.Font;
+                int maxsize = this.Width;
+
+                if (pushedArgument.ContainsKey("TrimOutOfBounds") && ((bool)pushedArgument["TrimOutOfBounds"]))
+                {
+                    using (SharpDX.DirectWrite.TextLayout layout = new SharpDX.DirectWrite.TextLayout(FactoryDWrite, str, stringFormat, maxsize, font.Height))
+                    {
+                        var lines = layout.GetLineMetrics();
+                        StringBuilder strb = new StringBuilder();
+                        var hittests = layout.HitTestTextRange(0, str.Length, rect.X, rect.Y);
+
+                        int trimPos = -1;
+                        for (int i = 0; i < hittests.Length; ++i)
+                        {
+                            if (hittests[i].Top + hittests[i].Height > rect.Bottom)
+                            {
+                                trimPos = hittests[i].TextPosition;
+                                break;
+                            }
+                        }
+                        String trimmedStr = str;
+                        if (trimPos > -1)
+                        {
+                            trimmedStr = str.Substring(0, trimPos);
+                        }
+                        target.PushAxisAlignedClip(new RectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), AntialiasMode.Aliased);
+                        target.DrawText(trimmedStr, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont | DrawTextOptions.Clip);
+                        target.PopAxisAlignedClip();
+                    }
+                }
+                else
+                {
+                    target.PushAxisAlignedClip(new RectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), AntialiasMode.Aliased);
+                    target.DrawText(str, stringFormat, new RawRectangleF(rect.X, rect.Y, rect.Right, rect.Bottom), brush, DrawTextOptions.EnableColorFont | DrawTextOptions.Clip);
+                    target.PopAxisAlignedClip();
+                }
+
+               
+                stringFormat.Dispose();
+            }
+            
         }
         public void disposeImage(System.Drawing.Image image)
         {
@@ -1122,7 +1169,7 @@ namespace SDLMMSharp
         {
             using (var bmp = flushToBMP(w,h))
             {
-                return bmp.Clone(new System.Drawing.Rectangle(left, top, w, h), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                return bmp.Clone(new System.Drawing.Rectangle(left, top, w, h), bmp.PixelFormat);
             }
         }
         public void flush()
@@ -1231,6 +1278,25 @@ namespace SDLMMSharp
             {
                 target.PopAxisAlignedClip();
             });
+        }
+
+        Dictionary<String, Object> pushedArgument = new Dictionary<string, object>();
+        public void setArgument(string key, object val)
+        {
+            AddDrawRequest((target) =>
+            {
+                pushedArgument[key] = val;
+            });
+            
+        }
+
+        public void unsetArgument(string key)
+        {
+            AddDrawRequest((target) =>
+            {
+                pushedArgument.Remove(key);
+            });
+            
         }
     }
 }
