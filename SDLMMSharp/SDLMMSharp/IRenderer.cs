@@ -37,11 +37,18 @@ namespace SDLMMSharp
 
         void SetClipping(Rectangle rect);
         void UnsetClipping();
+
+        IDisposable SetRectangleClipping(int x, int y, int w, int h);
+        IDisposable SetCircleClipping(System.Drawing.Point center, int radius);
+        void DisposeObject(IDisposable obj);
+
         void drawString(String str, int x, int y, int color, System.Drawing.Font font = null);
         void drawString(String str, System.Drawing.Rectangle rect, int color, System.Drawing.Font font = null);
         void drawLine(int x0, int y0, int x1, int y1, int color, int width);
         void setArgument(String key, Object val);
         void unsetArgument(String key);
+        void drawEllipse(int x, int y, int w, int h, int color, int strokeWidth);
+
         void drawEllipse(int x, int y, int w, int h, int color);
         void fillEllipse(int x, int y, int w, int h, int color);
         void fillEllipse(int x, int y, int w, int h, System.Drawing.Brush gdibrush);

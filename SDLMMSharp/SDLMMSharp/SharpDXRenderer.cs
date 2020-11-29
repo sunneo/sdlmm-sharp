@@ -13,6 +13,7 @@ using Resource = SharpDX.Direct3D11.Resource;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+using SDLMMSharp.Base;
 
 namespace SDLMMSharp
 {
@@ -847,6 +848,20 @@ namespace SDLMMSharp
             }
             
         }
+        public void DisposeObject(IDisposable obj)
+        {
+            AddDrawRequest((target) =>
+            {
+                try
+                {
+                    obj.Dispose();
+                }
+                catch (Exception ee)
+                {
+
+                }
+            });
+        }
         public void disposeImage(System.Drawing.Image image)
         {
             AddDrawRequest((target) =>
@@ -876,12 +891,16 @@ namespace SDLMMSharp
         }
         public void drawEllipse(int x, int y, int w, int h, int color)
         {
+            drawEllipse(x, y, w, h, color, 1);
+        }
+        public void drawEllipse(int x, int y, int w, int h, int color, int strokeWidth)
+        {
             AddDrawRequest((target) =>
             {
                 using (var brush = GetBrushFromColor(target, color))
                 {
                     Ellipse ell = new Ellipse(new RawVector2(x + w / 2, y + h / 2), w, h);
-                    target.DrawEllipse(ell, brush);
+                    target.DrawEllipse(ell, brush, strokeWidth);
                 }
             });
         }
@@ -1262,8 +1281,48 @@ namespace SDLMMSharp
                 mTextRenderingHint = value;
             }
         }
+        public IDisposable SetCircleClipping(System.Drawing.Point center, int radius)
+        {
+            DisposableObject disposableObject = new DisposableObject();
+            AddDrawRequest((target) =>
+            {
+                LayerParameters parm = new LayerParameters();
+                Layer layer = new Layer(target);
+                Ellipse circle = new Ellipse(Vector2FromGDIPoint(center), radius, radius);
+                EllipseGeometry elli = new EllipseGeometry(target.Factory, circle);
+                disposableObject.OnDisposed += (s, e) =>
+                {
+                    target.PopLayer();
+                    layer.Dispose();
+                    elli.Dispose();
+                };
+                parm.GeometricMask = elli;
+                target.PushLayer(ref parm, layer);
+                
+            });
+            return disposableObject;
+        }
+        public IDisposable SetRectangleClipping(int x,int y,int w,int h)
+        {
+            DisposableObject disposableObject = new DisposableObject();
+            AddDrawRequest((target) =>
+            {
+                LayerParameters parm = new LayerParameters();
+                Layer layer = new Layer(target);
+                RawRectangleF rect = new RawRectangleF(x, y, x+w, y+h);
+                RectangleGeometry elli = new RectangleGeometry(target.Factory, rect);
+                disposableObject.OnDisposed += (s, e) =>
+                {
+                    target.PopLayer();
+                    layer.Dispose();
+                    elli.Dispose();
+                };
+                parm.GeometricMask = elli;
+                target.PushLayer(ref parm, layer);
 
-
+            });
+            return disposableObject;
+        }
         public void SetClipping(System.Drawing.Rectangle rect)
         {
             AddDrawRequest((target) =>
@@ -1299,4 +1358,5 @@ namespace SDLMMSharp
             
         }
     }
+   
 }

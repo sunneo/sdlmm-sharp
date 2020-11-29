@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDLMMSharp.Base;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -488,11 +489,15 @@ namespace SDLMMSharp
                 canvas.SetPixel(x, y, coveredColor(color));
             }
         }
-        public void drawEllipse(int x, int y, int w, int h, int color)
+        public void drawEllipse(int x, int y, int w, int h, int color, int strokeWidth)
         {
             hasDrawRequest = true;
-            Pen pen = GetPenFromColor(color);
+            Pen pen = GetPenFromColor(color, strokeWidth);
             graphic.DrawEllipse(pen, x, y, w, h);
+        }
+        public void drawEllipse(int x, int y, int w, int h, int color)
+        {
+            drawEllipse(x, y, w, h, color, 1);
         }
         public void fillEllipse(int x, int y, int w, int h, int color)
         {
@@ -1699,8 +1704,53 @@ namespace SDLMMSharp
                 setSmoothMode = value;
             }
         }
+        public IDisposable SetCircleClipping(System.Drawing.Point center, int radius)
+        {
+            DisposableObject disposableObject = new DisposableObject();
+            GraphicsPath path = new GraphicsPath();
+            int x = center.X - radius;
+            int y = center.Y - radius;
+            Rectangle rectCircle = new Rectangle(x, y, radius * 2, radius * 2);
+            path.AddEllipse(rectCircle);
+            System.Drawing.Region region = graphic.Clip;
+            if(region == null)
+            {
+                region = new System.Drawing.Region(this.ClientRectangle);
+            }
+            graphic.Clip = new System.Drawing.Region(path);
+            disposableObject.OnDisposed += (s, e) =>
+            {
+                path.Dispose();
+                graphic.Clip = region;
+            };
+            return disposableObject;
+        }
+        public IDisposable SetRectangleClipping(int x, int y, int w, int h)
+        {
+            DisposableObject disposableObject = new DisposableObject();
+            System.Drawing.Region region = graphic.Clip;
+            if (region == null)
+            {
+                region = new System.Drawing.Region(this.ClientRectangle);
+            }
+            graphic.Clip = new System.Drawing.Region(new Rectangle(x,y,w,h));
+            disposableObject.OnDisposed += (s, e) =>
+            {
+                graphic.Clip = region;
+            };
+            return disposableObject;
+        }
+        public void DisposeObject(IDisposable obj)
+        {
+            try
+            {
+                obj.Dispose();
+            }
+            catch (Exception ee)
+            {
 
-
+            }
+        }
         public void SetClipping(Rectangle rect)
         {
             graphic.Clip = new System.Drawing.Region(rect);
