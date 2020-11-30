@@ -85,6 +85,7 @@
     <Compile Include="Base\CircleShape.cs" />
     <Compile Include="Base\DisposableObject.cs" />
     <Compile Include="Base\IShape.cs" />
+    <Compile Include="Base\LineShape.cs" />
     <Compile Include="Base\RectangleShape.cs" />
     <Compile Include="CursorIconManager.cs" />
     <Compile Include="CustomControl\GifRenderer.cs">
