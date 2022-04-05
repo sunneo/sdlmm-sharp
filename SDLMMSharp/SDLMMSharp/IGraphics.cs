@@ -11,6 +11,7 @@ namespace SDLMMSharp
 {
     public interface IGraphics
     {
+        Rectangle ClientRectangle { get; }
         CompositingMode CompositingMode { get; set; }
         CompositingQuality CompositingQuality { get; set; }
         InterpolationMode InterpolationMode { get; set; }

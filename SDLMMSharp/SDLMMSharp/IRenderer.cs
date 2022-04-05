@@ -11,13 +11,15 @@ namespace SDLMMSharp
     {
         public delegate void OnMouseButtonAction(int x, int y, int btn, bool ison);
         public delegate void OnMouseMoveAction(int x, int y, int btn, bool ison);
-        public delegate void OnMouseWhellAction(int x, int y, int scrollAmount);
+        public delegate void OnMouseWheelAction(int x, int y, int scrollAmount);
         public delegate void OnKeyboardAction(int keycode, bool ctrl, bool ison);
     }
     
     public interface IRenderer:IDisposable
     {
+        bool IsDisposed();
         IGraphics GetGraphics();
+        Rectangle GetClientArea();
         System.Drawing.Drawing2D.CompositingMode CompositingMode { get; set; }
         System.Drawing.Drawing2D.CompositingQuality CompositingQuality { get; set; }
         System.Drawing.Drawing2D.InterpolationMode InterpolationMode { get; set; }
@@ -26,7 +28,7 @@ namespace SDLMMSharp
         IRendererDelegates.OnMouseButtonAction onMouseClickHandler { get; set; }
         IRendererDelegates.OnMouseMoveAction onMouseMoveHandler { get; set; }
         IRendererDelegates.OnKeyboardAction onKeyboard { get; set; }
-        IRendererDelegates.OnMouseWhellAction onMouseWhell { get; set; }
+        IRendererDelegates.OnMouseWheelAction onMouseWhell { get; set; }
         bool Selectable { get; set; }
         bool IsValid { get; }
         void setUseAlpha(bool buse);

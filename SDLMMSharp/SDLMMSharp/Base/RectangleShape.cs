@@ -29,7 +29,7 @@ namespace SDLMMSharp.Base
         public int ImageAlpha;
         public bool Dashed = false;
         protected Image cachedImage;
-        bool disposed = false;
+        protected bool disposed = false;
         public event EventHandler<Rectangle> RectangleChanged;
         public event EventHandler<Action<IRenderer>> OverlayRequested;
         public Point Center
@@ -93,6 +93,11 @@ namespace SDLMMSharp.Base
         public void SetSize(Size size)
         {
             this.rect.Size = size;
+            RectangleChanged(this, this.rect);
+        }
+        virtual public void SetRectangle(Rectangle rect)
+        {
+            this.rect = rect;
             RectangleChanged(this, this.rect);
         }
         virtual public void SetLocation(int x,int y)
@@ -174,6 +179,19 @@ namespace SDLMMSharp.Base
             DrawBackground(gc);
             DrawForeGround(gc);
             UnsetClip(gc);
+        }
+        public static void DrawRectangle(IRenderer gc, int x, int y, int w, int h, int borderwidth, int bordercolor,
+            int backcolor)
+        {
+            int alphaback = (int)(((backcolor & 0xff000000) >> 24) & 0xff);
+            if (alphaback > 0)
+            {
+                gc.fillRect(x, y, w, h,backcolor);
+            }
+            if (borderwidth > 0)
+            {
+                gc.drawRect(x, y, w, h, bordercolor, false, 1);
+            }
         }
     }
 }

@@ -305,6 +305,15 @@ namespace SDLMMSharp
         {
             instance.flush();
         }
+
+        public System.Drawing.Rectangle ClientRectangle
+        {
+            get
+            {
+                return instance.GetClientArea();
+            }
+        }
+
         public System.Drawing.Bitmap Bitmap
         {
             get

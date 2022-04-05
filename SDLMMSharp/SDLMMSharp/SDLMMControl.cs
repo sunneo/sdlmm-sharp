@@ -224,7 +224,7 @@ namespace SDLMMSharp
         public IRendererDelegates.OnMouseButtonAction onMouseClickHandler { get; set; }
         public IRendererDelegates.OnMouseMoveAction onMouseMoveHandler { get; set; }
         public IRendererDelegates.OnKeyboardAction onKeyboard { get; set; }
-        public IRendererDelegates.OnMouseWhellAction onMouseWhell { get; set; }
+        public IRendererDelegates.OnMouseWheelAction onMouseWhell { get; set; }
         public static readonly int MOUSE_LEFT = 0;
         public static readonly int MOUSE_MIDDLE = 1;
         public static readonly int MOUSE_RIGHT = 2;
@@ -1769,6 +1769,16 @@ namespace SDLMMSharp
         public void unsetArgument(string key)
         {
             pushedArgument.Remove(key);
+        }
+
+        public Rectangle GetClientArea()
+        {
+            return this.ClientRectangle;
+        }
+
+        bool IRenderer.IsDisposed()
+        {
+            return base.IsDisposed;
         }
     }
     public class SolidBrushDictionary<key, type>

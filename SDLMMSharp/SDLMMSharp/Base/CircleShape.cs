@@ -9,6 +9,14 @@ namespace SDLMMSharp.Base
 {
     public class CircleShape:RectangleShape
     {
+        public CircleShape()
+        {
+
+        }
+        public CircleShape(Rectangle rect):base(rect,1,Color.Black)
+        {
+
+        }
         public int Radius
         {
             get
