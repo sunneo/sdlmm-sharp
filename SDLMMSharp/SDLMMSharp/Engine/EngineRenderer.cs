@@ -74,8 +74,7 @@ namespace SDLMMSharp.Engine
             timer.Tick += Timer_Tick;    
         }
 
-        IEnumerator<Object> animationIteratorPreEffect;
-        IEnumerator<Object> animationIteratorAfterEffect;
+        
         private bool PaintAnimationPreEffect()
         {
             try
@@ -89,11 +88,16 @@ namespace SDLMMSharp.Engine
                     }
                     else
                     {
-                        if(animationIteratorPreEffect==null || !animationIteratorPreEffect.MoveNext())
+                        
+                        LinkedListNode<IEnumerator<Object>> node = animationIteratorPreEffects.First;
+                        while(node != null)
                         {
-                            IEnumerable<Object> nextIter = animationIteratorPreEffects.First.Value;
-                            animationIteratorPreEffect = nextIter.GetEnumerator();
-                            return true;
+                            LinkedListNode<IEnumerator<Object>> next = node.Next;
+                            if(!node.Value.MoveNext())
+                            {
+                                animationIteratorPreEffects.Remove(node);
+                            }
+                            node = next;
                         }
                     }
                 }
@@ -117,11 +121,16 @@ namespace SDLMMSharp.Engine
                     }
                     else
                     {
-                        if (animationIteratorAfterEffect == null || !animationIteratorAfterEffect.MoveNext())
+
+                        LinkedListNode<IEnumerator<Object>> node = animationIteratorAfterEffects.First;
+                        while (node != null)
                         {
-                            IEnumerable<Object> nextIter = animationIteratorAfterEffects.First.Value;
-                            animationIteratorAfterEffect = nextIter.GetEnumerator();
-                            return true;
+                            LinkedListNode<IEnumerator<Object>> next = node.Next;
+                            if (!node.Value.MoveNext())
+                            {
+                                animationIteratorAfterEffects.Remove(node);
+                            }
+                            node = next;
                         }
                     }
                 }
@@ -141,9 +150,14 @@ namespace SDLMMSharp.Engine
         {
             CurrentScene = scene;
             SceneStack.AddLast(scene);
+            scene.Start();
         }
         public virtual IScene PopScene()
         {
+            if (CurrentScene != null)
+            {
+                CurrentScene.End();
+            }
             this.SceneStack.RemoveLast();
             IScene ret = null;
             if(this.SceneStack.Count > 0)
@@ -154,6 +168,7 @@ namespace SDLMMSharp.Engine
             {
                 ret = RootScene;
             }
+            
             CurrentScene = ret;
             return ret;
 
@@ -176,7 +191,6 @@ namespace SDLMMSharp.Engine
             if (scene == null) return;
             try
             {
-                this.renderer.Clear(backgroundColor);
                 PaintAnimationPreEffect();
                 scene.Paint(this.renderer);
                 PaintAnimationAfterEffect();
@@ -206,15 +220,15 @@ namespace SDLMMSharp.Engine
         {
             if (isPreAffect)
             {
-                this.animationIteratorPreEffects.AddLast(iter);
+                this.animationIteratorPreEffects.AddLast(iter.GetEnumerator());
             }
             else
             {
-                this.animationIteratorAfterEffects.AddLast(iter);
+                this.animationIteratorAfterEffects.AddLast(iter.GetEnumerator());
             }
         }
-        LinkedList<IEnumerable<Object>> animationIteratorPreEffects = new LinkedList<IEnumerable<object>>();
-        LinkedList<IEnumerable<Object>> animationIteratorAfterEffects = new LinkedList<IEnumerable<object>>();
+        LinkedList<IEnumerator<Object>> animationIteratorPreEffects = new LinkedList<IEnumerator<object>>();
+        LinkedList<IEnumerator<Object>> animationIteratorAfterEffects = new LinkedList<IEnumerator<object>>();
         internal IEnumerable<object> CreateSnapshotAdditionEffect(IEnumerable<object> animate)
         {
             IRenderer renderer = this.GetCanvas();

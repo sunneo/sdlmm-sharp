@@ -32,6 +32,7 @@
             this.sliderCheckbox2 = new SDLMMSharp.CustomControl.SliderCheckbox();
             this.progressSlider1 = new SDLMMSharp.CustomControl.ProgressSlider();
             this.sliderCheckbox1 = new SDLMMSharp.CustomControl.SliderCheckbox();
+            this.buttonOpenTestScene = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // sliderCheckbox3
@@ -96,7 +97,7 @@
             this.progressSlider1.Location = new System.Drawing.Point(13, 203);
             this.progressSlider1.Margin = new System.Windows.Forms.Padding(4);
             this.progressSlider1.Name = "progressSlider1";
-            this.progressSlider1.SelectedIndex = 0;
+            this.progressSlider1.SelectedIndex = -1;
             this.progressSlider1.Size = new System.Drawing.Size(226, 31);
             this.progressSlider1.SliderBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(136)))), ((int)(((byte)(136)))), ((int)(((byte)(136)))));
             this.progressSlider1.SliderForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(170)))), ((int)(((byte)(255)))));
@@ -135,12 +136,23 @@
             this.sliderCheckbox1.UseGradient = false;
             this.sliderCheckbox1.UsePaintBackground = true;
             // 
+            // buttonOpenTestScene
+            // 
+            this.buttonOpenTestScene.Location = new System.Drawing.Point(36, 282);
+            this.buttonOpenTestScene.Name = "buttonOpenTestScene";
+            this.buttonOpenTestScene.Size = new System.Drawing.Size(117, 23);
+            this.buttonOpenTestScene.TabIndex = 8;
+            this.buttonOpenTestScene.Text = "Open Test Scene";
+            this.buttonOpenTestScene.UseVisualStyleBackColor = true;
+            this.buttonOpenTestScene.Click += new System.EventHandler(this.buttonOpenTestScene_Click);
+            // 
             // SDLMMDemoForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(553, 509);
+            this.Controls.Add(this.buttonOpenTestScene);
             this.Controls.Add(this.sliderCheckbox3);
             this.Controls.Add(this.sliderCheckbox2);
             this.Controls.Add(this.progressSlider1);
@@ -158,7 +170,7 @@
         private CustomControl.ProgressSlider progressSlider1;
         private CustomControl.SliderCheckbox sliderCheckbox2;
         private CustomControl.SliderCheckbox sliderCheckbox3;
-
+        private System.Windows.Forms.Button buttonOpenTestScene;
     }
 }
 

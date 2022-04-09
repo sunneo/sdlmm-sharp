@@ -13,6 +13,7 @@ namespace SDLMMSharp.Engine.Controls
         public SpriteObject()
         {
             Resizer = new ResizerClazz(this);
+            supportEnterItem = true;
         }
         public IDraggableTarget AdditionalHitTest(int x, int y)
         {
@@ -41,6 +42,10 @@ namespace SDLMMSharp.Engine.Controls
 
             return null;
         }
-       
+        public override SpriteObject GetSpriteObject()
+        {
+            return this;
+        }
+
     }
 }

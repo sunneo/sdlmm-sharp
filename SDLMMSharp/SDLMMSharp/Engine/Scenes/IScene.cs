@@ -18,16 +18,18 @@ namespace SDLMMSharp.Engine.Scenes
         void SetZoom(double zoom);
 
         void SetSelection(IDraggableTarget draggable);
-        void GetSelection(IDraggableTarget draggable);
+        IDraggableTarget GetSelection();
         void Start();
         void End();
+
+        void Layout();
         void Refresh();
         void Paint(IRenderer gc);
 
         Point GetConstraintPosition(int x, int y);
 
-        IEnumerable<DraggableTarget> GetClickableObjects();
-        IEnumerable<DraggableTarget> GetOverlayToolObjects();
+        IEnumerable<IDraggableTarget> GetClickableObjects();
+        IEnumerable<IDraggableTarget> GetOverlayToolObjects();
         void CancelDrag();
         bool IsWorldDraggable();
         bool HandleWorldDrag(Point mouseDown, int x, int y);

@@ -142,11 +142,51 @@ namespace SDLMMSharp.Engine
         }
         protected virtual void OnMouseMove(int x, int y, int btn, bool ison)
         {
-
+            
+            if(!ison)
+            {
+                return;
+            }
+            int deltaX = mouseDownPosition.X - x;
+            int deltaY = mouseDownPosition.Y - y;
+            Point newPos = dragItemOrigPosition;
+            newPos.X -= deltaX;
+            newPos.Y -= deltaY;
+            if(worldDraggable == dragItem)
+            {
+                worldDraggable.mouseMoved(ison, x, y);
+            }
+            else if(dragItem != null)
+            {
+                dragItem.SetPosition(newPos.X, newPos.Y);
+            }
+            this.owner.InvalidateRenderer();
         }
+        Point mouseDownPosition;
+        Point dragItemOrigPosition;
         protected virtual void OnMouseDown(int x,int y, int btn)
         {
-
+            mouseIsDown = true;
+            IDraggableTarget selection = null;
+            do
+            {
+                if (btn != 0) break;
+                selection = GetDraggableTarget(x, y);
+                if (selection == null) break;
+            } while (false);
+            this.owner.GetCurrentScene().SetSelection(selection);
+            mouseDownPosition.X = x;
+            mouseDownPosition.Y = y;
+            if (selection != null)
+            {
+                dragItemOrigPosition = selection.GetPosition();
+            }
+            if(selection == null)
+            {
+                selection = worldDraggable;
+                selection.mouseAction(true, x, y);
+            }
+            dragItem = selection;
         }
         
   
@@ -175,7 +215,8 @@ namespace SDLMMSharp.Engine
 
         private void MouseUpDropItemNoRecursive(int x, int y, IDraggableTarget e, bool triggerGroupAction)
         {
-            
+            dragItem = null;
+            this.owner.GetCurrentScene().SetSelection(null);
         }
 
         protected virtual void OnMouseUp(int x, int y, int btn)
@@ -324,14 +365,14 @@ namespace SDLMMSharp.Engine
         public IDraggableTarget GetDraggableTarget(int x, int y, bool selectOverlay)
         {
             
-            IEnumerable<DraggableTarget> target = owner.GetCurrentScene().GetClickableObjects();
+            IEnumerable<IDraggableTarget> target = owner.GetCurrentScene().GetClickableObjects();
             if (selectOverlay)
             {
                 target = owner.GetCurrentScene().GetOverlayToolObjects();
             }
            
 
-            foreach (DraggableTarget entry in target)
+            foreach (IDraggableTarget entry in target)
             {
                 try
                 {

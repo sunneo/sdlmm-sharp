@@ -11,6 +11,7 @@ namespace SDLMMSharp.Engine.Controls
 {
     public interface IDraggableTarget:IShape,IMouseHandler
     {
+        LinkedListNode<IDraggableTarget> ImageLayerHandle { get; set; }
         void SetPosition(int x, int y);
         Point GetPosition();
         void SetSize(int width, int height);

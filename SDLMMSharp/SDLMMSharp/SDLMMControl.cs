@@ -1472,18 +1472,25 @@ namespace SDLMMSharp
             {
                 return;
             }
-            if (drawFncInvoked)
+            try
             {
-                CompositingMode mode = e.Graphics.CompositingMode;
-                e.Graphics.CompositingMode = CompositingMode.SourceCopy;
-                e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
-                e.Graphics.CompositingMode = mode;
-                hasDrawRequest = false;
-                drawFncInvoked = false;
+                if (drawFncInvoked)
+                {
+                    CompositingMode mode = e.Graphics.CompositingMode;
+                    e.Graphics.CompositingMode = CompositingMode.SourceCopy;
+                    e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
+                    e.Graphics.CompositingMode = mode;
+                    hasDrawRequest = false;
+                    drawFncInvoked = false;
+                }
+                else
+                {
+                    e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
+                }
             }
-            else
+            catch(Exception ee)
             {
-                e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
+
             }
             if (this.Controls.Count > 0)
                 base.OnPaint(e);
@@ -1519,7 +1526,7 @@ namespace SDLMMSharp
         public Bitmap flushToBMP()
         {
             graphic.Flush();
-            return canvas;
+            return canvas.Clone(new Rectangle(0, 0, canvas.Width, canvas.Height),canvas.PixelFormat);
         }
         public Bitmap flushToBMP(int left, int top, int w, int h)
         {

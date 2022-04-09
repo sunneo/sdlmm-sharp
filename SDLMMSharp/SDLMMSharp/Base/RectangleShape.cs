@@ -107,7 +107,10 @@ namespace SDLMMSharp.Base
         virtual public void SetLocation(Point pt)
         {
             this.rect.Location = pt;
-            RectangleChanged(this, this.rect);
+            if (RectangleChanged != null)
+            {
+                RectangleChanged(this, this.rect);
+            }
         }
         virtual public void Dispose()
         {
@@ -158,12 +161,12 @@ namespace SDLMMSharp.Base
         protected IDisposable clipObject;
         virtual protected void SetClip(IRenderer gc)
         {
-            clipObject = gc.SetRectangleClipping(rect.X, rect.Y, rect.Width, rect.Height);
+            //clipObject = gc.SetRectangleClipping(rect.X, rect.Y, rect.Width, rect.Height);
         }
         virtual protected void UnsetClip(IRenderer gc)
         {
             if (clipObject == null) return;
-            gc.DisposeObject(clipObject);
+           // gc.DisposeObject(clipObject);
             clipObject = null;
         }
         virtual protected void DrawForeGround(IRenderer gc)

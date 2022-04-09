@@ -1217,7 +1217,7 @@ namespace SDLMMSharp
         }
         protected override void OnPaintBackground(PaintEventArgs e)
         {
-            base.OnPaintBackground(e);
+            //base.OnPaintBackground(e);
 
         }
         public IGraphics GetGraphics()
@@ -1313,9 +1313,16 @@ namespace SDLMMSharp
                 RectangleGeometry elli = new RectangleGeometry(target.Factory, rect);
                 disposableObject.OnDisposed += (s, e) =>
                 {
-                    target.PopLayer();
-                    layer.Dispose();
-                    elli.Dispose();
+                    try
+                    {
+                        target.PopLayer();
+                        layer.Dispose();
+                        elli.Dispose();
+                    }
+                    catch(Exception ee)
+                    {
+
+                    }
                 };
                 parm.GeometricMask = elli;
                 target.PushLayer(ref parm, layer);

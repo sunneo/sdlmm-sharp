@@ -15,8 +15,9 @@ namespace SDLMMSharp.Base
         }
         public CircleShape(Rectangle rect):base(rect,1,Color.Black)
         {
-
+            
         }
+      
         public int Radius
         {
             get
@@ -62,8 +63,11 @@ namespace SDLMMSharp.Base
         }
         protected override void SetClip(IRenderer gc)
         {
-            clipObject = gc.SetCircleClipping(this.Center, this.Radius);
+            //clipObject = gc.SetCircleClipping(this.Center, this.Radius);
         }
-
+        protected override void UnsetClip(IRenderer gc)
+        {
+           // base.UnsetClip(gc);
+        }
     }
 }

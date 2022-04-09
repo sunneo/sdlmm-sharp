@@ -10,10 +10,13 @@ namespace SDLMMSharp.Engine.Scenes
 {
     public class BaseScene : IScene
     {
-        Point offset;
-        double zoom = 1.0;
+        protected Point offset;
+        protected double zoom = 1.0;
         protected Point constraintPosition;
-        BaseEngine owner;
+        protected BaseEngine owner;
+        protected LinkedList<IDraggableTarget> draggables = new LinkedList<IDraggableTarget>();
+        protected LinkedList<IDraggableTarget> overlayTools = new LinkedList<IDraggableTarget>();
+        IDraggableTarget selection;
         public BaseEngine Parent
         {
             get
@@ -29,10 +32,25 @@ namespace SDLMMSharp.Engine.Scenes
         {
             
         }
-
-        public virtual IEnumerable<DraggableTarget> GetClickableObjects()
+        public IDraggableTarget AddDraggableObject(IDraggableTarget obj)
         {
-            yield break;
+            obj.ImageLayerHandle = draggables.AddFirst(obj);
+            return obj;
+        }
+        public IDraggableTarget AddOverlayToolObject(IDraggableTarget obj)
+        {
+            obj.ImageLayerHandle = overlayTools.AddFirst(obj);
+            return obj;
+        }
+        public virtual void Layout()
+        {
+            draggables.Clear();
+            overlayTools.Clear();
+        }
+
+        public virtual IEnumerable<IDraggableTarget> GetClickableObjects()
+        {
+            return draggables;
         }
         
         public virtual Point GetConstraintPosition(int x, int y)
@@ -47,14 +65,14 @@ namespace SDLMMSharp.Engine.Scenes
             return offset;
         }
 
-        public virtual IEnumerable<DraggableTarget> GetOverlayToolObjects()
+        public virtual IEnumerable<IDraggableTarget> GetOverlayToolObjects()
         {
-            yield break;
+            return overlayTools;
         }
 
-        public void GetSelection(IDraggableTarget draggable)
+        public virtual IDraggableTarget GetSelection()
         {
-           
+            return selection;
         }
 
         public double GetZoom()
@@ -64,12 +82,25 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual void Paint(IRenderer gc)
         {
-            
+            for(LinkedListNode<IDraggableTarget> obj = this.draggables.First; obj != null; obj = obj.Next)
+            {
+                if (obj.Value == null) continue;
+                SpriteObject sprite = obj.Value.GetSpriteObject();
+                if (sprite == null) continue;
+                sprite.Paint(gc);
+            }
+            for (LinkedListNode<IDraggableTarget> obj = this.overlayTools.First; obj != null; obj = obj.Next)
+            {
+                if (obj.Value == null) continue;
+                SpriteObject sprite = obj.Value.GetSpriteObject();
+                if (sprite == null) continue;
+                sprite.Paint(gc);
+            }
         }
 
         public virtual void Refresh()
         {
-            
+            Layout();
         }
 
         public void SetOffset(int x, int y)
@@ -80,6 +111,22 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual void SetSelection(IDraggableTarget draggable)
         {
+            if (selection == draggable) return;
+            SpriteObject obj = null;
+            do {
+                if (selection == null) break;
+                obj = selection.GetSpriteObject();
+                if (obj == null) break;
+                obj.SetSelected(false);
+            }while (false) ;
+            selection = draggable;
+            do
+            {
+                if (selection == null) break;
+                obj = selection.GetSpriteObject();
+                if (obj == null) break;
+                obj.SetSelected(true);
+            } while (false);
             
         }
 
@@ -90,7 +137,7 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual void Start()
         {
-            
+            Layout();
         }
 
         public void CancelDrag()

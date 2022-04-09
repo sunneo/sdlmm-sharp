@@ -11,6 +11,8 @@ namespace SDLMMSharp.Engine.Controls
 {
     public class DraggableTarget : IDraggableTarget, IDisposable
     {
+        LinkedListNode<IDraggableTarget> m_ImageLayerHandler;
+        
         public RectangleShape ClickableRange;
         public Func<DraggableTarget, bool> CanEnterDelegate;
         public Func<bool, int, int, bool> mouseActionDelegate;
@@ -23,10 +25,36 @@ namespace SDLMMSharp.Engine.Controls
         
         bool mDisposed = false;
         bool mEnabled = true;
-        bool supportEnterItem;
+        protected bool supportEnterItem;
         bool mselected = false;
         public LabelShape label;
-
+        public LinkedListNode<IDraggableTarget> ImageLayerHandle
+        {
+            get => m_ImageLayerHandler;
+            set
+            {
+                bool removeFirst = false;
+                if (value != null && value != m_ImageLayerHandler)
+                {
+                    removeFirst = true;
+                }
+                if(value == null)
+                {
+                    removeFirst = true;
+                }
+                if(removeFirst)
+                {
+                    if (m_ImageLayerHandler != null)
+                    {
+                        if (m_ImageLayerHandler.List != null)
+                        {
+                            m_ImageLayerHandler.List.Remove(m_ImageLayerHandler);
+                        }
+                    }
+                }
+                m_ImageLayerHandler = value;
+            }
+        }
         public virtual void SetSelected(bool value)
         {
             mselected = value;
@@ -45,16 +73,26 @@ namespace SDLMMSharp.Engine.Controls
         public void Dispose()
         {
             if (isDisposed()) return;
-            if (shape != null)
+            try
             {
-                shape.Dispose();
-                shape = null;
+                if (shape != null)
+                {
+                    shape.Dispose();
+                    shape = null;
+                }
+                if (ClickableRange != null)
+                {
+                    ClickableRange.Dispose();
+                    ClickableRange = null;
+                }
+                m_ImageLayerHandler.List.Remove(m_ImageLayerHandler);
+                m_ImageLayerHandler = null;
             }
-            if (ClickableRange != null)
+            catch(Exception ee)
             {
-                ClickableRange.Dispose();
-                ClickableRange = null;
+
             }
+            mDisposed = true;
         }
 
         public virtual bool IsShapeIntersectsCanvas(IGraphics gc, Rectangle clientArea)
@@ -157,21 +195,25 @@ namespace SDLMMSharp.Engine.Controls
 
         public virtual bool IsHit(int x, int y)
         {
+            if (shape == null) return false;
             return shape.IsHit(x, y);
         }
 
         public virtual void Paint(IRenderer gc)
         {
-
+            if (shape == null) return;
+            shape.Paint(gc);
         }
 
         public virtual void SetPosition(int x, int y)
         {
+            if (shape == null) return;
             shape.SetLocation(x, y);
         }
 
         public virtual void SetRectangle(Rectangle rect)
         {
+            if (shape == null) return;
             shape.SetRectangle(rect);
         }
 
@@ -203,6 +245,10 @@ namespace SDLMMSharp.Engine.Controls
                     }
                     mouseMovedDelegateRunning = false;
                 }
+            } 
+            else
+            {
+
             }
             return ret;
         }
@@ -235,6 +281,10 @@ namespace SDLMMSharp.Engine.Controls
                     mouseActionDelegateRunning = false;
                 }
             }
+            else
+            {
+
+            }
             return ret;
         }
 
@@ -261,10 +311,11 @@ namespace SDLMMSharp.Engine.Controls
                     mouseDoubleDelegateRunning = false;
                 }
             }
+            
             return ret;
         }
 
-        public SpriteObject GetSpriteObject()
+        public virtual SpriteObject GetSpriteObject()
         {
             return null;
         }

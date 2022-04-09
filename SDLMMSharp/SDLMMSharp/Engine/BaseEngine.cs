@@ -25,11 +25,11 @@ namespace SDLMMSharp.Engine
         {
             get
             {
-                return Renderer;
+                return renderer;
             }
             set
             {
-                Renderer = value;
+                renderer = value;
             }
         }
         public EngineMouseHandler MouseHandler
@@ -108,7 +108,8 @@ namespace SDLMMSharp.Engine
 
         public void InvalidateRenderer()
         {
-            
+            if (this.renderer == null) return;
+            this.renderer.Invalidate();
         }
     }
 }
