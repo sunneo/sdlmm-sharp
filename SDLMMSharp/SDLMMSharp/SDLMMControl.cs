@@ -1,6 +1,7 @@
 ﻿using SDLMMSharp.Base;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -14,6 +15,21 @@ namespace SDLMMSharp
 {
     public partial class SDLMMControl : UserControl, IRenderer
     {
+        volatile bool mTransparent = false;
+
+        [Browsable(true)]
+        public bool Transparent
+        {
+            get
+            {
+                return mTransparent;
+            }
+            set
+            {
+                mTransparent = value;
+                SetStyle(ControlStyles.SupportsTransparentBackColor, value);
+            }
+        }
         public interface SDLMMEventListener
         {
             event EventHandler<SDLMMControl> ScreenPainted;

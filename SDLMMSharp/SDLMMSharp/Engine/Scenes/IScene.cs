@@ -22,7 +22,7 @@ namespace SDLMMSharp.Engine.Scenes
         void Start();
         void End();
 
-        void Layout();
+        void InitializeComponent();
         void Refresh();
         void Paint(IRenderer gc);
 

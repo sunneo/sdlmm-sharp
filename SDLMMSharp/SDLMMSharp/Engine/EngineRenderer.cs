@@ -150,7 +150,6 @@ namespace SDLMMSharp.Engine
         {
             CurrentScene = scene;
             SceneStack.AddLast(scene);
-            scene.Start();
         }
         public virtual IScene PopScene()
         {
@@ -158,7 +157,10 @@ namespace SDLMMSharp.Engine
             {
                 CurrentScene.End();
             }
-            this.SceneStack.RemoveLast();
+            if (this.SceneStack.Count > 0)
+            {
+                this.SceneStack.RemoveLast();
+            }
             IScene ret = null;
             if(this.SceneStack.Count > 0)
             {

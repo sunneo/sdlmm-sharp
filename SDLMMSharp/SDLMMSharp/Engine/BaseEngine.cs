@@ -67,6 +67,17 @@ namespace SDLMMSharp.Engine
             this.renderer.End();
             this.mouseHandler.End();
         }
+        public event IRendererDelegates.OnKeyboardAction KeyboardAction
+        {
+            add
+            {
+                BaseControl.onKeyboard += value;
+            }
+            remove
+            {
+                BaseControl.onKeyboard -= value;
+            }
+        }
         public event IRendererDelegates.OnMouseButtonAction MouseAction
         {
             add

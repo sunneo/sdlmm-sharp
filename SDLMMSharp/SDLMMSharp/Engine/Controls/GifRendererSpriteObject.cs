@@ -12,9 +12,9 @@ using System.Drawing.Imaging;
 using System.Threading;
 using SDLMMSharp.Base;
 
-namespace SDLMMSharp.CustomControl
+namespace SDLMMSharp.Engine.Controls
 {
-    public partial class GifRenderer : UserControl, IDisposable
+    public class GifRendererSpriteObject:SpriteObject
     {
         private object locker = new object();
         volatile int mDuration = -1;
@@ -66,14 +66,14 @@ namespace SDLMMSharp.CustomControl
                 mAutoStart = value;
                 if (origVal != mAutoStart)
                 {
-  
+
                     if (Visible && mAutoStart)
                     {
                         if (durations.Count == 0)
                         {
                             _LoadImage(this.mImage);
                         }
-                        
+
                         Start();
                     }
                     else
@@ -144,14 +144,14 @@ namespace SDLMMSharp.CustomControl
         {
             get
             {
-                
+
                 {
                     return mImage;
                 }
             }
             set
             {
-                
+
                 {
                     Image origImage = mImage;
                     mImage = value;
@@ -287,45 +287,15 @@ namespace SDLMMSharp.CustomControl
             }
         }
 
-        public GifRenderer()
+        public GifRendererSpriteObject()
         {
-            InitializeComponent();
             DoRepeat = true;
-            sdlmmControl1.SmoothMode = System.Drawing.Drawing2D.SmoothingMode.None;
-            sdlmmControl1.setUseAlpha(false);
         }
-        public void DrawFrame(int idx)
-        {
-            if (DesignMode)
-            {
-                Bitmap _img = (Bitmap)this.Image;
-                try
-                {
-                    sdlmmControl1.drawImage(_img, this.Width / 2 - _img.Width / 2, this.Height / 2 - _img.Height / 2, _img.Width, _img.Height);
-                }
-                catch (Exception ee)
-                {
-                    Console.WriteLine(ee.ToString());
-                }
-                return;
-            }
-            Bitmap img = GetFrame(idx) as Bitmap;
-            if (img != null)
-            {
-                if (mKeepRatio)
-                {
-                    sdlmmControl1.Clear(this.BackColor.ToArgb());
-                    sdlmmControl1.drawImage(img, this.Width / 2 - img.Width / 2, this.Height / 2 - img.Height / 2, img.Width, img.Height);
-                }
-                else
-                {
-                    sdlmmControl1.drawImage(img, 0, 0, sdlmmControl1.Width, sdlmmControl1.Height);
-                }
-                sdlmmControl1.flush();
-            }
-        }
+        
 
-        protected override void OnVisibleChanged(EventArgs e)
+
+
+        protected override void OnVisibleChanged()
         {
             if (this.Visible)
             {
@@ -338,47 +308,26 @@ namespace SDLMMSharp.CustomControl
                     Start();
                 }
             }
-            base.OnVisibleChanged(e);
+            base.OnVisibleChanged();
         }
 
-        protected override void OnSizeChanged(EventArgs e)
+        protected override void OnSizeChanged()
         {
             lock (locker)
             {
-
                 if (mKeepRatio)
                 {
                     _LoadImage(mImage);
                 }
-                sdlmmControl1.Clear(this.BackColor.ToArgb());
-                sdlmmControl1.Size = this.Size;
-                if (Visible)
-                {
-                    DrawFrame(mFrameIndex);
-                }
-
             }
-            base.OnSizeChanged(e);
+            base.OnSizeChanged();
         }
-        public override void Refresh()
-        {
-            sdlmmControl1.flush();
-            base.Refresh();
-        }
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            sdlmmControl1.flush();
-            base.OnPaintBackground(e);
-        }
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            sdlmmControl1.flush();
-            base.OnPaint(e);
-        }
+        
+        
         private Image GetFrame(int idx)
         {
             if (mImage == null) return null;
-            
+
             if (mPreGenerateFrame)
             {
                 return imgs[idx];
@@ -455,10 +404,7 @@ namespace SDLMMSharp.CustomControl
                     mFrameIndex = Idx;
                     if (FrameIndexChanged != null)
                     {
-                        this.Invoke(new Action(() =>
-                        {
-                            FrameIndexChanged(this, mFrameIndex);
-                        }));
+                        FrameIndexChanged(this, mFrameIndex);
                     }
                     if (mDuration == -1)
                     {
@@ -471,15 +417,7 @@ namespace SDLMMSharp.CustomControl
                     Bitmap img = imgs[Idx] as Bitmap;
                     if (img == null) continue;
                     if (!IsRunning) return;
-                    if (mKeepRatio)
-                    {
-                        sdlmmControl1.drawImage(img, sdlmmControl1.Width / 2 - img.Width / 2, sdlmmControl1.Height / 2 - img.Height / 2, img.Width, img.Height);
-                    }
-                    else
-                    {
-                        sdlmmControl1.drawImage(img, 0, 0, sdlmmControl1.Width, sdlmmControl1.Height);
-                    }
-                    sdlmmControl1.flush();
+                    this.shape.BackgroundImage = img;
                     if (!IsRunning) return;
                     if (OnImageUpdated != null)
                     {
@@ -510,12 +448,7 @@ namespace SDLMMSharp.CustomControl
 
         public void Start(int start = 0, int len = -1)
         {
-            if (this.DesignMode)
-            {
-                return;
-            }
             if (this.mImage == null) return;
-            sdlmmControl1.Clear(this.BackColor.ToArgb());
             lock (threadLocker)
             {
                 if (ThreadPlayer != null && ThreadPlayer.IsAlive)
@@ -575,7 +508,6 @@ namespace SDLMMSharp.CustomControl
         {
             get
             {
-                if (DesignMode) return 1;
                 if (mImage == null)
                 {
                     return 0;
@@ -616,7 +548,6 @@ namespace SDLMMSharp.CustomControl
             }
             if (PreGenerateFrame)
             {
-                if (DesignMode) return;
                 imgs.Clear();
                 if (img.FrameDimensionsList.Length > 0)
                 {
@@ -631,14 +562,14 @@ namespace SDLMMSharp.CustomControl
                         int outputHeight = img.Height;
                         if (img.Height > img.Width)
                         {
-                            ratioX = ((double)img.Width) / sdlmmControl1.Width;
+                            ratioX = ((double)img.Width) / Width;
                             ratioY = ratioX;
                             outputWidth = (int)(img.Width / ratioX);
                             outputHeight = (int)(img.Height / ratioY);
                         }
                         else
                         {
-                            ratioY = ((double)img.Height) / sdlmmControl1.Height;
+                            ratioY = ((double)img.Height) / Height;
                             ratioX = ratioY;
                             outputWidth = (int)(img.Width / ratioX);
                             outputHeight = (int)(img.Height / ratioY);
@@ -700,7 +631,7 @@ namespace SDLMMSharp.CustomControl
                 return mIsDisposed;
             }
         }
-        public new void Dispose()
+        public virtual void Dispose()
         {
             if (!mIsDisposed)
             {
@@ -708,7 +639,7 @@ namespace SDLMMSharp.CustomControl
             }
             mIsDisposed = true;
         }
-        ~GifRenderer()
+        ~GifRendererSpriteObject()
         {
             Dispose();
         }
@@ -717,60 +648,6 @@ namespace SDLMMSharp.CustomControl
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
-        /// 清除任何使用中的資源。
-        /// </summary>
-        /// <param name="disposing">如果應該處置 Managed 資源則為 true，否則為 false。</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
-        #region 元件設計工具產生的程式碼
-
-        /// <summary> 
-        /// 此為設計工具支援所需的方法 - 請勿使用程式碼編輯器
-        /// 修改這個方法的內容。
-        /// </summary>
-        private void InitializeComponent()
-        {
-            this.sdlmmControl1 = new SDLMMSharp.SDLMMControl();
-            this.SuspendLayout();
-            // 
-            // sdlmmControl1
-            // 
-            this.sdlmmControl1.AutoValidate = System.Windows.Forms.AutoValidate.Disable;
-            this.sdlmmControl1.BackColor = System.Drawing.Color.White;
-            this.sdlmmControl1.CausesValidation = false;
-            this.sdlmmControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.sdlmmControl1.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
-            this.sdlmmControl1.Location = new System.Drawing.Point(0, 0);
-            this.sdlmmControl1.Margin = new System.Windows.Forms.Padding(0);
-            this.sdlmmControl1.Name = "sdlmmControl1";
-            this.sdlmmControl1.Selectable = true;
-            this.sdlmmControl1.Size = new System.Drawing.Size(552, 395);
-            this.sdlmmControl1.SmoothMode = System.Drawing.Drawing2D.SmoothingMode.Default;
-            this.sdlmmControl1.TabIndex = 0;
-            // 
-            // GifRenderer
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.sdlmmControl1);
-            this.DoubleBuffered = true;
-            this.Name = "GifRenderer";
-            this.Size = new System.Drawing.Size(552, 395);
-            this.ResumeLayout(false);
-
-        }
-
-
-        #endregion
-
-        private SDLMMSharp.SDLMMControl sdlmmControl1;
+        
     }
 }

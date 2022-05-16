@@ -17,6 +17,7 @@ namespace SDLMMSharp.Engine.Scenes
         protected LinkedList<IDraggableTarget> draggables = new LinkedList<IDraggableTarget>();
         protected LinkedList<IDraggableTarget> overlayTools = new LinkedList<IDraggableTarget>();
         IDraggableTarget selection;
+        public Image BackgroundImage;
         public BaseEngine Parent
         {
             get
@@ -30,7 +31,7 @@ namespace SDLMMSharp.Engine.Scenes
         }
         public virtual void End()
         {
-            
+            Parent.KeyboardAction -= OnKeyboardAction;
         }
         public IDraggableTarget AddDraggableObject(IDraggableTarget obj)
         {
@@ -42,7 +43,7 @@ namespace SDLMMSharp.Engine.Scenes
             obj.ImageLayerHandle = overlayTools.AddFirst(obj);
             return obj;
         }
-        public virtual void Layout()
+        public virtual void InitializeComponent()
         {
             draggables.Clear();
             overlayTools.Clear();
@@ -82,25 +83,31 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual void Paint(IRenderer gc)
         {
+            gc.Clear(unchecked((int)(0xffffffff)));
+            if (this.BackgroundImage != null) 
+            {
+                Rectangle rect = gc.GetClientArea();
+                gc.drawImage(BackgroundImage, 0, 0, rect.Width, rect.Height);
+            }
             for(LinkedListNode<IDraggableTarget> obj = this.draggables.First; obj != null; obj = obj.Next)
             {
                 if (obj.Value == null) continue;
-                SpriteObject sprite = obj.Value.GetSpriteObject();
-                if (sprite == null) continue;
-                sprite.Paint(gc);
+                if (!(obj.Value is DraggableTarget)) continue;
+                DraggableTarget draggable = (DraggableTarget)obj.Value;
+                draggable.Paint(gc);
             }
             for (LinkedListNode<IDraggableTarget> obj = this.overlayTools.First; obj != null; obj = obj.Next)
             {
                 if (obj.Value == null) continue;
-                SpriteObject sprite = obj.Value.GetSpriteObject();
-                if (sprite == null) continue;
-                sprite.Paint(gc);
+                if (!(obj.Value is DraggableTarget)) continue;
+                DraggableTarget draggable = (DraggableTarget)obj.Value;
+                draggable.Paint(gc);
             }
         }
 
         public virtual void Refresh()
         {
-            Layout();
+            InitializeComponent();
         }
 
         public void SetOffset(int x, int y)
@@ -127,7 +134,6 @@ namespace SDLMMSharp.Engine.Scenes
                 if (obj == null) break;
                 obj.SetSelected(true);
             } while (false);
-            
         }
 
         public void SetZoom(double zoom)
@@ -137,7 +143,13 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual void Start()
         {
-            Layout();
+            Parent.KeyboardAction += OnKeyboardAction;
+            InitializeComponent();
+        }
+
+        protected virtual void OnKeyboardAction(int keycode, bool ctrl, bool ison)
+        {
+            
         }
 
         public void CancelDrag()

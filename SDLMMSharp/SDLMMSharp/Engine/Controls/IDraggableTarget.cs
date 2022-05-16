@@ -16,7 +16,10 @@ namespace SDLMMSharp.Engine.Controls
         Point GetPosition();
         void SetSize(int width, int height);
         Size GetSize();
+        bool SupportDrag();
 
+        LinkedList<IDraggableTarget> Controls { get; }
+        
         Rectangle GetRectangle();
         void SetRectangle(Rectangle rect);
 

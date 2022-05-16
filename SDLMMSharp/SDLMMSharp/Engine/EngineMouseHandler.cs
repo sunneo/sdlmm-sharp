@@ -103,7 +103,7 @@ namespace SDLMMSharp.Engine
         protected virtual DraggableTarget CreateWorldDraggable()
         {
             DraggableTarget worldDraggable = new DraggableTarget();
-            worldDraggable.mouseMovedDelegate = (bool on, int x, int y) =>
+            worldDraggable.mouseMovedDelegate = (DraggableTarget sender,bool on, int x, int y) =>
             {
                 IScene scene = owner.GetCurrentScene();
                 if (on && scene.IsWorldDraggable())
@@ -158,7 +158,10 @@ namespace SDLMMSharp.Engine
             }
             else if(dragItem != null)
             {
-                dragItem.SetPosition(newPos.X, newPos.Y);
+                if (dragItem.SupportDrag())
+                {
+                    dragItem.SetPosition(newPos.X, newPos.Y);
+                }
             }
             this.owner.InvalidateRenderer();
         }
@@ -362,6 +365,57 @@ namespace SDLMMSharp.Engine
         {
             return GetDraggableTarget(x, y, false);
         }
+        public IDraggableTarget GetNestedDraggableTarget(IDraggableTarget target, int x, int y)
+        {
+            if (!target.IsHit(x, y)) return null;
+            foreach (IDraggableTarget entry in target.Controls)
+            {
+                if (entry == null) continue;
+                if (!(entry is SpriteObject)) continue;
+                SpriteObject attr = entry as SpriteObject;
+                if (attr == null || attr.isDisposed())
+                {
+                    continue;
+                }
+
+                if (!attr.Enabled)
+                {
+                    continue;
+                }
+
+                if (attr != null)
+                {
+                    
+                    IDraggableTarget additionalTest = attr.AdditionalHitTest(x, y);
+                    if (additionalTest != null)
+                    {
+                        return additionalTest;
+                    }
+                    if (!attr.IsHit(x, y))
+                    {
+                        continue;
+                    }
+                    if (attr.Resizer != null)
+                    {
+                        if (attr.Resizer.WidthAdjuster.IsHit(x, y))
+                        {
+                            return attr.Resizer.WidthAdjuster;
+                        }
+                        else if (attr.Resizer.HeightAdjuster.IsHit(x, y))
+                        {
+                            return attr.Resizer.HeightAdjuster;
+                        }
+                        else if (attr.Resizer.BothAdjuster.IsHit(x, y))
+                        {
+                            return attr.Resizer.BothAdjuster;
+                        }
+                    }
+
+                    return GetNestedDraggableTarget(attr, x, y);
+                }
+            }
+            return target;
+        }
         public IDraggableTarget GetDraggableTarget(int x, int y, bool selectOverlay)
         {
             
@@ -400,22 +454,7 @@ namespace SDLMMSharp.Engine
                         }
                         if (attr.IsHit(x, y))
                         {
-                            if (attr.Resizer != null)
-                            {
-                                if (attr.Resizer.WidthAdjuster.IsHit(x, y))
-                                {
-                                    return attr.Resizer.WidthAdjuster;
-                                }
-                                else if (attr.Resizer.HeightAdjuster.IsHit(x, y))
-                                {
-                                    return attr.Resizer.HeightAdjuster;
-                                }
-                                else if (attr.Resizer.BothAdjuster.IsHit(x, y))
-                                {
-                                    return attr.Resizer.BothAdjuster;
-                                }
-                            }
-                            return attr;
+                            return GetNestedDraggableTarget(attr, x, y);
                         }
                     }
                 }

@@ -95,9 +95,9 @@ namespace SDLMMSharp
                 
                 return obj;
             }
-            public override void Layout()
+            public override void InitializeComponent()
             {
-                base.Layout();
+                base.InitializeComponent();
                 AddDraggableObject(createRectangle(10, 10, 50, 50));
                 AddDraggableObject(createRectangle(30, 30, 50, 50));
                 AddDraggableObject(createRectangle(100, 100, 150, 150));

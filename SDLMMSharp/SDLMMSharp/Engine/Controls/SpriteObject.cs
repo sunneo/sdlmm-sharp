@@ -1,6 +1,7 @@
 ﻿using SDLMMSharp.Base;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,23 +11,29 @@ namespace SDLMMSharp.Engine.Controls
     public class SpriteObject : DraggableTarget
     {
         public ResizerClazz Resizer;
+        public virtual void InitializeComponent()
+        {
+
+        }
         public SpriteObject()
         {
             Resizer = new ResizerClazz(this);
             supportEnterItem = true;
         }
+
+        
         public IDraggableTarget AdditionalHitTest(int x, int y)
         {
-            if (this.label != null && (this.label is IDraggableTarget)) 
+            if (this.label != null && (this.label is IDraggableTarget))
             {
                 if (this.label.IsHit(x, y))
                 {
                     return (IDraggableTarget)this.label;
                 }
             }
-            if(this.Resizer != null)
+            if (this.Resizer != null)
             {
-                if (this.Resizer.WidthAdjuster!=null && this.Resizer.WidthAdjuster.IsHit(x, y))
+                if (this.Resizer.WidthAdjuster != null && this.Resizer.WidthAdjuster.IsHit(x, y))
                 {
                     return this.Resizer.WidthAdjuster;
                 }
@@ -47,5 +54,9 @@ namespace SDLMMSharp.Engine.Controls
             return this;
         }
 
+        public void Invalidate()
+        {
+
+        }
     }
 }

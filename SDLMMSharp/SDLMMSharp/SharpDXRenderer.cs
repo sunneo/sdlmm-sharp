@@ -14,12 +14,28 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using SDLMMSharp.Base;
+using System.ComponentModel;
 
 namespace SDLMMSharp
 {
 
     public class SharpDXControl : UserControl, IRenderer
     {
+        volatile bool mTransparent = false;
+
+        [Browsable(true)]
+        public bool Transparent
+        {
+            get
+            {
+                return mTransparent;
+            }
+            set
+            {
+                mTransparent = value;
+                SetStyle(ControlStyles.SupportsTransparentBackColor, value);
+            }
+        }
         public class SpecialArguments
         {
             public const String TrimOutOfBound = "TrimOutOfBounds";

@@ -79,7 +79,10 @@ namespace SDLMMSharp.Base
         FormulaContext formulaContext;
         private void RefreshFormula()
         {
-            formulaContext.type = FormulaContext.TYPE.None;
+            if (formulaContext != null)
+            {
+                formulaContext.type = FormulaContext.TYPE.None;
+            }
         }
         public LineShape(Point p1,Point p2, int strokeWidth)
         {

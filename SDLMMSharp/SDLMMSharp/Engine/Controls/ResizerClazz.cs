@@ -31,13 +31,13 @@ namespace SDLMMSharp.Engine.Controls
             HeightAdjuster.mouseActionDelegate = HeightAdjusterMouseMoved;
             HeightAdjuster.mouseActionDelegate = BothAdjusterMouseMoved;
         }
-        protected virtual bool WidthAdjusterMouseAction(bool on,int x,int y)
+        protected virtual bool WidthAdjusterMouseAction(DraggableTarget sender,bool on,int x,int y)
         {
             bool ret = base.mouseAction(on, x, y);
             origRect = Target.GetRectangle();
             return ret;
         }
-        protected virtual bool WidthAdjusterMouseMoved(bool on,int x,int y)
+        protected virtual bool WidthAdjusterMouseMoved(DraggableTarget sender, bool on,int x,int y)
         {
             if (!on)
             {
@@ -55,13 +55,13 @@ namespace SDLMMSharp.Engine.Controls
         {
             this.SetSelected(value);
         }
-        protected virtual bool HeightAdjusterMouseAction(bool on, int x, int y)
+        protected virtual bool HeightAdjusterMouseAction(DraggableTarget sender, bool on, int x, int y)
         {
             bool ret = base.mouseAction(on, x, y);
             origRect = Target.GetRectangle();
             return ret;
         }
-        protected virtual bool HeightAdjusterMouseMoved(bool on, int x, int y)
+        protected virtual bool HeightAdjusterMouseMoved(DraggableTarget sender, bool on, int x, int y)
         {
             if (!on)
             {
@@ -78,7 +78,7 @@ namespace SDLMMSharp.Engine.Controls
         {
             this.SetSelected(value);
         }
-        protected virtual bool BothAdjusterMouseMoved(bool on, int x, int y)
+        protected virtual bool BothAdjusterMouseMoved(DraggableTarget sender, bool on, int x, int y)
         {
             if (!on)
             {
@@ -96,7 +96,7 @@ namespace SDLMMSharp.Engine.Controls
             Target.SetRectangle(rect);
             return true;
         }
-        protected virtual bool BothAdjusterMouseAction(bool on, int x, int y)
+        protected virtual bool BothAdjusterMouseAction(DraggableTarget sender, bool on, int x, int y)
         {
             bool ret = base.mouseAction(on, x, y);
             origRect = Target.GetRectangle();

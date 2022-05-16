@@ -34,13 +34,14 @@ namespace SDLMMSharp.Base
         public String Text = "";
         public Font Font;
         public bool vCenter;
+        
         public ContentAlignment hAlign = ContentAlignment.TopLeft;
         /**
          * true to draw a invert font onto (x,y-2)
          */
         public bool invertBold = false;
         public bool circledBackground = false;
-        CircleShape circleShape;
+        public CircleShape circleShape;
         /**
          * get circle shape of this label
          * it will only be available when {@link #circledBackground} is set true
@@ -61,11 +62,11 @@ namespace SDLMMSharp.Base
 
         public LabelShape(String txt) : base()
         {
-
+            this.StrokeWidth = 0;
             if (String.IsNullOrEmpty(txt)) return;
             if (this.Text == null) return;
             this.Text = txt.Trim();
-
+            
         }
         public DrawLabelParam GetDrawLabelParam()
         {
@@ -76,18 +77,13 @@ namespace SDLMMSharp.Base
             parm.vCenter = this.vCenter;
             parm.invertBold = this.invertBold;
             parm.font = this.Font;
-            if (!this.ForeColor.IsEmpty)
-            {
-                parm.color = this.ForeColor.ToArgb();
-            }
-            if (!this.BackColor.IsEmpty)
-            {
-                parm.bgcolor = this.BackColor.ToArgb();
-            }
+            parm.color = this.ForeColor.ToArgb();
+            parm.bgcolor = this.BackColor.ToArgb();           
             return parm;
         }
         override public void Paint(IRenderer gc)
         {
+            if (!Visible) return;
             if (this.circleShape != null)
             {
                 this.circleShape.Paint(gc);
@@ -98,6 +94,8 @@ namespace SDLMMSharp.Base
             }
             Rectangle rect = this.rect;
             DrawLabelParam parm = GetDrawLabelParam();
+            
+           // LabelShape.DrawLabel(gc, Text, rect.X, rect.Y, rect.Width, rect.Height, parm.color, parm.bgcolor,0);               
             LabelShape.DrawLabel(gc, Text, rect, parm);
         }
 

@@ -12,22 +12,61 @@ namespace SDLMMSharp.Engine.Controls
     public class DraggableTarget : IDraggableTarget, IDisposable
     {
         LinkedListNode<IDraggableTarget> m_ImageLayerHandler;
-        
+        public LinkedList<IDraggableTarget> Overlay = new LinkedList<IDraggableTarget>();
         public RectangleShape ClickableRange;
         public Func<DraggableTarget, bool> CanEnterDelegate;
-        public Func<bool, int, int, bool> mouseActionDelegate;
-        public Func<bool, int, int, bool> mouseMovedDelegate;
-        public Func<int, int, bool> mouseDoubleClickDelegate;
+        public Func<DraggableTarget,bool, int, int, bool> mouseActionDelegate;
+        public Func<DraggableTarget, bool, int, int, bool> mouseMovedDelegate;
+        public Func<DraggableTarget, int, int, bool> mouseDoubleClickDelegate;
         volatile bool mouseActionDelegateRunning = false;
         volatile bool mouseMovedDelegateRunning = false;
         volatile bool mouseDoubleDelegateRunning = false;
-        public RectangleShape shape;
+        public RectangleShape shape = new RectangleShape() {  Visible=true, StrokeWidth=0};
+        public bool IsDraggable = false;
         
         bool mDisposed = false;
         bool mEnabled = true;
         protected bool supportEnterItem;
         bool mselected = false;
         public LabelShape label;
+
+
+        public Color ForeColor
+        {
+            get
+            {
+                return shape.ForeColor;
+            }
+            set
+            {
+                shape.ForeColor = value;
+            }
+        }
+        public int Left
+        {
+            get
+            {
+                return shape.Location.X;
+            }           
+        }
+        public int Top
+        {
+            get
+            {
+                return shape.Location.Y;
+            }
+        }
+
+        public virtual void BringToFront()
+        {
+            if (ImageLayerHandle == null) return;
+
+            if (ImageLayerHandle.List == null) return;
+            LinkedList<IDraggableTarget> list = ImageLayerHandle.List;
+            list.Remove(ImageLayerHandle);
+            this.ImageLayerHandle = list.AddLast(this);
+            
+        }
         public LinkedListNode<IDraggableTarget> ImageLayerHandle
         {
             get => m_ImageLayerHandler;
@@ -55,6 +94,13 @@ namespace SDLMMSharp.Engine.Controls
                 m_ImageLayerHandler = value;
             }
         }
+        public LinkedList<IDraggableTarget> Controls
+        {
+            get
+            {
+                return Overlay;
+            }
+        }
         public virtual void SetSelected(bool value)
         {
             mselected = value;
@@ -62,7 +108,7 @@ namespace SDLMMSharp.Engine.Controls
 
         public virtual bool SupportDrag()
         {
-            return false;
+            return IsDraggable;
         }
 
        
@@ -93,6 +139,26 @@ namespace SDLMMSharp.Engine.Controls
 
             }
             mDisposed = true;
+        }
+
+        public bool Visible
+        {
+            get
+            {
+                if (shape == null) return false;
+                return shape.Visible;
+            }
+            set
+            {
+                if (shape == null) return;
+                shape.Visible = value;
+                OnVisibleChanged();
+            }
+        }
+
+        protected virtual void OnVisibleChanged()
+        {
+
         }
 
         public virtual bool IsShapeIntersectsCanvas(IGraphics gc, Rectangle clientArea)
@@ -149,7 +215,76 @@ namespace SDLMMSharp.Engine.Controls
             }
         }
 
+        public Image BackgroundImage
+        {
+            get
+            {
+                return shape.BackgroundImage;
+            }
+            set
+            {
+                shape.BackgroundImage = value;
+            }
+        }
+        public Point Location
+        {
+            get
+            {
+                return shape.Location;
+            }
+            set
+            {
+                shape.Location = value;
+            }
+        }
+        public Size Size
+        {
+            get
+            {
+                return shape.Size;
+            }
+            set
+            {
+                shape.Size = value;
+                OnSizeChanged();
+            }
+        }
+        public virtual void Refresh()
+        {
 
+        }
+        protected virtual void OnSizeChanged()
+        {
+
+        }
+
+        public int Width
+        {
+            get
+            {
+                return shape.Rectangle.Width;
+            }
+        }
+        public int Height
+        {
+            get
+            {
+                return shape.Rectangle.Height;
+            }
+        }
+        public Rectangle Bounds
+        {
+            get
+            {
+                return this.shape.Rectangle;
+            }
+            set
+            {
+                this.shape.SetRectangle(value);
+            }
+        }
+
+        public object Tag;
 
         public virtual bool CanEnter()
         {
@@ -201,20 +336,39 @@ namespace SDLMMSharp.Engine.Controls
 
         public virtual void Paint(IRenderer gc)
         {
+            if (!Visible) return;
             if (shape == null) return;
             shape.Paint(gc);
+            foreach(IDraggableTarget overlay in Overlay)
+            {
+                overlay.Paint(gc);
+            }
         }
 
         public virtual void SetPosition(int x, int y)
         {
             if (shape == null) return;
+            Point orig = shape.Location;
             shape.SetLocation(x, y);
+            foreach(IDraggableTarget overlay in Overlay)
+            {
+                Point pt = overlay.GetPosition();
+                pt.Offset(x - orig.X, y - orig.Y);
+                overlay.SetPosition(pt.X,pt.Y);
+            }
         }
 
         public virtual void SetRectangle(Rectangle rect)
         {
             if (shape == null) return;
+            Point orig = shape.Location;
             shape.SetRectangle(rect);
+            foreach (IDraggableTarget overlay in Overlay)
+            {
+                Point pt = overlay.GetPosition();
+                pt.Offset(rect.X - orig.X, rect.Y - orig.Y);
+                overlay.SetPosition(pt.X, pt.Y);
+            }
         }
 
         public virtual void SetSize(int width, int height)
@@ -237,7 +391,7 @@ namespace SDLMMSharp.Engine.Controls
                     mouseMovedDelegateRunning = true;
                     try
                     {
-                        ret = mouseMovedDelegate(on, x, y);
+                        ret = mouseMovedDelegate(this,on, x, y);
                     }
                     catch (Exception ee)
                     {
@@ -260,7 +414,7 @@ namespace SDLMMSharp.Engine.Controls
                 mouseDownPosition.X = x;
                 mouseDownPosition.Y = y;
             }
-            if (Enabled)
+            if (!Enabled)
             {
                 return true;
             }
@@ -272,7 +426,7 @@ namespace SDLMMSharp.Engine.Controls
                     mouseActionDelegateRunning = true;
                     try
                     {
-                        ret = mouseActionDelegate(on, x, y);
+                        ret = mouseActionDelegate(this, on, x, y);
                     }
                     catch (Exception ee)
                     {
@@ -302,7 +456,7 @@ namespace SDLMMSharp.Engine.Controls
                     mouseDoubleDelegateRunning = true;
                     try
                     {
-                        ret = mouseDoubleClickDelegate(x, y);
+                        ret = mouseDoubleClickDelegate(this, x, y);
                     }
                     catch (Exception ee)
                     {
