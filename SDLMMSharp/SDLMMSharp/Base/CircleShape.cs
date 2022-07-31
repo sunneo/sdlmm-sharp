@@ -42,19 +42,31 @@ namespace SDLMMSharp.Base
                 gc.fillEllipse(rect.X,rect.Y,rect.Width,rect.Height, BackColor.ToArgb());
             }
             if (BackgroundImage == null) return;
-            if (cachedImage == null)
+            if (cachedImage == null ||cachedImage.IsDisposed)
             {
-                cachedImage = new Bitmap(BackgroundImage, rect.Width, rect.Height);
+                if (BackgroundImage != null && BackgroundImage.image != null && !BackgroundImage.IsDisposed)
+                {
+                    cachedImage = BitmapWrap.FromBitmap(new Bitmap(BackgroundImage, rect.Width, rect.Height));
+                }
             }
             else
             {
                 if (cachedImage.Width != rect.Width || cachedImage.Height != rect.Height)
                 {
-                    cachedImage.Dispose();
-                    cachedImage = new Bitmap(BackgroundImage, rect.Width, rect.Height);
+                    if (cachedImage.image != BackgroundImage.image)
+                    {
+                        cachedImage.DoDispose();
+                    }
+                    if (BackgroundImage != null && BackgroundImage.image != null && !BackgroundImage.IsDisposed)
+                    {
+                        cachedImage = BitmapWrap.FromBitmap(new Bitmap(BackgroundImage, rect.Width, rect.Height));
+                    }
                 }
             }
-            gc.drawImage(cachedImage, rect.X, rect.Y, rect.Width, rect.Height);
+            if (cachedImage != null && !cachedImage.IsDisposed)
+            {
+                gc.drawImage(cachedImage, rect.X, rect.Y, rect.Width, rect.Height);
+            }
         }
         protected override void DrawForeGround(IRenderer gc)
         {

@@ -94,9 +94,12 @@ namespace SDLMMSharp.Base
             }
             Rectangle rect = this.rect;
             DrawLabelParam parm = GetDrawLabelParam();
-            
-           // LabelShape.DrawLabel(gc, Text, rect.X, rect.Y, rect.Width, rect.Height, parm.color, parm.bgcolor,0);               
-            LabelShape.DrawLabel(gc, Text, rect, parm);
+
+            // LabelShape.DrawLabel(gc, Text, rect.X, rect.Y, rect.Width, rect.Height, parm.color, parm.bgcolor,0);               
+            if (!String.IsNullOrEmpty(Text))
+            {
+                LabelShape.DrawLabel(gc, Text, rect, parm);
+            }
         }
 
       

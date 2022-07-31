@@ -16,7 +16,15 @@ namespace SDLMMSharp
     public partial class SDLMMControl : UserControl, IRenderer
     {
         volatile bool mTransparent = false;
-
+        public class ExceptionEventArgs:EventArgs
+        {
+            public Exception arg;
+            public ExceptionEventArgs(Exception e)
+            {
+                this.arg = e;
+            }
+        }
+        public event EventHandler<ExceptionEventArgs> FatalErrorOccurred;
         [Browsable(true)]
         public bool Transparent
         {
@@ -266,6 +274,14 @@ namespace SDLMMSharp
                     return MOUSE_RIGHT;
             }
         }
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            if (onMouseClickHandler != null)
+            {
+                onMouseClickHandler(e.X, e.Y, mouseIdx(e.Button), false);
+            }
+            base.OnMouseClick(e);
+        }
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             if (onMouseWhell != null)
@@ -288,7 +304,7 @@ namespace SDLMMSharp
             {
                 onMouseClickHandler(e.X, e.Y, mouseIdx(e.Button), false);
             }
-            base.OnMouseDown(e);
+            base.OnMouseUp(e);
         }
         protected override void OnMouseMove(MouseEventArgs e)
         {
@@ -1515,28 +1531,69 @@ namespace SDLMMSharp
         {
 
             //lock (canvas)
-            if (drawFncInvoked)
+            if (sizeChanged)
             {
-                CompositingMode mode = e.Graphics.CompositingMode;
-                e.Graphics.CompositingMode = CompositingMode.SourceCopy;
-                e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
-                e.Graphics.CompositingMode = mode;
-                if (this.grabGraphic != null && this.grabRectangle != null)
+                sizeChanged = false;
+                try
                 {
-                    CompositingMode mode2 = this.grabGraphic.CompositingMode;
-                    Rectangle rect = grabRectangle.Value;
-                    this.grabGraphic.DrawImage(canvas, rect.X, rect.Y, rect.Width, rect.Height);
-                    this.grabGraphic.CompositingMode = mode2;
+                    if (prevCanvas != null)
+                    {
+                        prevCanvas.Dispose();
+                        prevCanvas = null;
+                    }
+                    if (prevGraphics != null)
+                    {
+                        prevGraphics.Dispose();
+                        prevGraphics = null;
+                    }
                 }
-                hasDrawRequest = false;
-                drawFncInvoked = false;
+                catch(Exception ee)
+                {
+
+                }
+                prevGraphics = null;
+                prevCanvas = null;
             }
-            else
+            
+            try
             {
-                e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
+                if (drawFncInvoked)
+                {
+                    if(canvas == null || canvas.Width == 0 || canvas.Height == 0)
+                    {
+                        return;
+                    }
+                    CompositingMode mode = e.Graphics.CompositingMode;
+                    e.Graphics.CompositingMode = CompositingMode.SourceCopy;
+                    e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
+                    e.Graphics.CompositingMode = mode;
+                    if (this.grabGraphic != null && this.grabRectangle != null)
+                    {
+                        CompositingMode mode2 = this.grabGraphic.CompositingMode;
+                        Rectangle rect = grabRectangle.Value;
+                        this.grabGraphic.DrawImage(canvas, rect.X, rect.Y, rect.Width, rect.Height);
+                        this.grabGraphic.CompositingMode = mode2;
+                    }
+                    hasDrawRequest = false;
+                    drawFncInvoked = false;
+                }
+                else
+                {
+                    e.Graphics.DrawImageUnscaled(canvas, 0, 0, canvas.Width, canvas.Height);
+                }
+                if (this.Controls.Count > 0)
+                {
+                    base.OnPaint(e);
+                }
             }
-            if (this.Controls.Count > 0)
-                base.OnPaint(e);
+            catch(Exception ee)
+            {
+                if (FatalErrorOccurred != null)
+                {
+                    FatalErrorOccurred(this, new ExceptionEventArgs(ee));
+                    return;
+                }
+            }
         }
 
         public Bitmap flushToBMP()
@@ -1665,39 +1722,63 @@ namespace SDLMMSharp
 
             }
         }
+        object locker = new object();
+        Bitmap prevCanvas;
+        Graphics prevGraphics;
+        bool sizeChanged = false;
         private void SDLMMControl_SizeChanged(object sender, EventArgs e)
         {
-            lock (canvas)
+            if (graphic != null)
             {
-                if (graphic != null)
+                hasDrawRequest = true;
+                drawFncInvoked = true;
+                graphic.Flush();
+                int width = this.Width;
+                int height = this.Height;
+                if (width <= 0 || height <= 0)
                 {
-                    hasDrawRequest = true;
-                    drawFncInvoked = true;
-                    graphic.Flush();
-                    int width = this.Width;
-                    int height = this.Height;
-                    if (width <= 0 || height <= 0)
-                    {
-                        return;
-                    }
-                    if (width <= 0) width = 32;
-                    if (height <= 0) height = 32;
-                    canvas = new Bitmap(canvas, width, height);
+                    return;
+                }
+                if (width <= 0) width = 32;
+                if (height <= 0) height = 32;
+                Bitmap newCanvas = null;
+                Graphics newGraphics = null;
+                try
+                {
+                    newCanvas = new Bitmap(canvas, width, height);
+                    newGraphics = null;
                     if (grabGraphic != null)
                     {
-                        graphic = grabGraphic;
+                        newGraphics = grabGraphic;
                     }
                     else
                     {
-                        graphic = Graphics.FromImage(canvas);
+                        newGraphics = Graphics.FromImage(newCanvas);
                     }
-                    graphic.Clip = new System.Drawing.Region(this.ClientRectangle);
-                    graphic.CompositingMode = CompositingMode;
-                    graphic.InterpolationMode = setInterpolationMode;
-                    graphic.SmoothingMode = setSmoothMode;
-                    graphic.TextRenderingHint = setTextRenderHint;
+                    newGraphics.Clip = new System.Drawing.Region(this.ClientRectangle);
+                    newGraphics.CompositingMode = CompositingMode;
+                    newGraphics.InterpolationMode = setInterpolationMode;
+                    newGraphics.SmoothingMode = setSmoothMode;
+                    newGraphics.TextRenderingHint = setTextRenderHint;
+                }
+                catch(Exception ee)
+                {
+                    if (FatalErrorOccurred != null)
+                    {
+                        FatalErrorOccurred(this,new ExceptionEventArgs(ee));
+                    }
+                    return;
+                }
+                lock (locker)
+                {
+                    prevCanvas = canvas;
+                    prevGraphics = graphic;
+                    canvas = newCanvas;
+                    graphic = newGraphics;
+                    sizeChanged = true;
                 }
             }
+           
         }
         public IGraphics GetGraphics()
         {

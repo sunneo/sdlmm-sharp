@@ -268,7 +268,7 @@ namespace SDLMMSharp.Engine
 
         EngineRenderer Parent;
         volatile bool drawing = false;
-        int mIdleTime = 160;
+        int mIdleTime = 16;
         int mBusyFreq = 60;
         DateTime previousRendererTime = DateTime.Now;
 

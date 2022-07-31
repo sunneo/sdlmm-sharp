@@ -39,7 +39,7 @@ namespace SDLMMSharp.Engine
             owner.MouseAction += Ctrl_MouseAction;
             owner.MouseMove += Ctrl_MouseMove;
             owner.MouseWheel += Ctrl_MouseWheel;
-            
+
             this.enabled = true;
         }
         public virtual void End()
@@ -77,7 +77,7 @@ namespace SDLMMSharp.Engine
             }
             else
             {
-                if(mouseEvt.isDown && btn == mouseEvt.btn)
+                if (mouseEvt.isDown && btn == mouseEvt.btn)
                 {
                     DateTime dt = DateTime.Now;
                     if (dt.Subtract(mouseEvt.clickTime).TotalMilliseconds <= MouseClickTimeMs)
@@ -90,7 +90,7 @@ namespace SDLMMSharp.Engine
                 mouseEvt.y = y;
                 mouseEvt.btn = btn;
                 mouseEvt.isDown = false;
-                if(mouseEvt.clickCnt >= 2)
+                if (mouseEvt.clickCnt >= 2)
                 {
                     mouseEvt.clickCnt = 0;
                     OnMouseDoubleClick(x, y, btn);
@@ -103,7 +103,7 @@ namespace SDLMMSharp.Engine
         protected virtual DraggableTarget CreateWorldDraggable()
         {
             DraggableTarget worldDraggable = new DraggableTarget();
-            worldDraggable.mouseMovedDelegate = (DraggableTarget sender,bool on, int x, int y) =>
+            worldDraggable.mouseMovedDelegate = (DraggableTarget sender, bool on, int x, int y) =>
             {
                 IScene scene = owner.GetCurrentScene();
                 if (on && scene.IsWorldDraggable())
@@ -121,7 +121,7 @@ namespace SDLMMSharp.Engine
                 }
                 return false;
             };
-            
+
             return worldDraggable;
         }
         DraggableTarget mWorldDraggable;
@@ -129,7 +129,7 @@ namespace SDLMMSharp.Engine
         {
             get
             {
-                if(mWorldDraggable == null)
+                if (mWorldDraggable == null)
                 {
                     mWorldDraggable = CreateWorldDraggable();
                 }
@@ -142,8 +142,8 @@ namespace SDLMMSharp.Engine
         }
         protected virtual void OnMouseMove(int x, int y, int btn, bool ison)
         {
-            
-            if(!ison)
+
+            if (!ison)
             {
                 return;
             }
@@ -152,11 +152,11 @@ namespace SDLMMSharp.Engine
             Point newPos = dragItemOrigPosition;
             newPos.X -= deltaX;
             newPos.Y -= deltaY;
-            if(worldDraggable == dragItem)
+            if (worldDraggable == dragItem)
             {
                 worldDraggable.mouseMoved(ison, x, y);
             }
-            else if(dragItem != null)
+            else if (dragItem != null)
             {
                 if (dragItem.SupportDrag())
                 {
@@ -167,7 +167,7 @@ namespace SDLMMSharp.Engine
         }
         Point mouseDownPosition;
         Point dragItemOrigPosition;
-        protected virtual void OnMouseDown(int x,int y, int btn)
+        protected virtual void OnMouseDown(int x, int y, int btn)
         {
             mouseIsDown = true;
             IDraggableTarget selection = null;
@@ -184,15 +184,15 @@ namespace SDLMMSharp.Engine
             {
                 dragItemOrigPosition = selection.GetPosition();
             }
-            if(selection == null)
+            if (selection == null)
             {
                 selection = worldDraggable;
                 selection.mouseAction(true, x, y);
             }
             dragItem = selection;
         }
-        
-  
+
+
         public void MouseUpDropItem(int x, int y, IDraggableTarget e)
         {
             MouseUpDropItem(x, y, e, true);
@@ -218,6 +218,7 @@ namespace SDLMMSharp.Engine
 
         private void MouseUpDropItemNoRecursive(int x, int y, IDraggableTarget e, bool triggerGroupAction)
         {
+            this.owner.GetCurrentScene().SetSelection(e,false);
             dragItem = null;
             this.owner.GetCurrentScene().SetSelection(null);
         }
@@ -255,8 +256,8 @@ namespace SDLMMSharp.Engine
             DateTime clickTime = DateTime.Now;
             int upperbound = 25;
             int index = 0;
-            
-            for(int i=0; i<index; ++i)
+
+            for (int i = 0; i < index; ++i)
             {
                 DateTime now = DateTime.Now;
                 if (now.Subtract(clickTime).TotalMilliseconds >= 500)
@@ -290,13 +291,13 @@ namespace SDLMMSharp.Engine
                 {
                     canvas.drawRect(newRect.X, newRect.Y, newRect.Width, newRect.Height, shape.ForeColor.ToArgb(), false, 1);
                 }
-                
+
             }
             yield break;
-	}
-    protected virtual void OnMouseDoubleClick(int x,int y,int btn)
+        }
+        protected virtual void OnMouseDoubleClick(int x, int y, int btn)
         {
-            
+
             EngineMouseHandler pthis = me;
             if (btn != 0)
             {
@@ -314,7 +315,7 @@ namespace SDLMMSharp.Engine
             Point refTransPoint = origPoint; // 
 
             IScene scene = owner.Renderer.GetCurrentScene();
-            
+
 
             IDraggableTarget item = GetDraggableTarget(refTransPoint.X, refTransPoint.Y);
 
@@ -327,11 +328,13 @@ namespace SDLMMSharp.Engine
                 }
                 else
                 {
-                    if (item is RectangleShape) {
+                    if (item is RectangleShape)
+                    {
                         shape = ((RectangleShape)item);
                     }
                 }
-                IEnumerable<Object> animate = newDoubleClickAnimation(scene, shape, ()=> {
+                IEnumerable<Object> animate = newDoubleClickAnimation(scene, shape, () =>
+                {
                     owner.Renderer.GetCurrentScene().EnterItem(item);
                 });
                 owner.Renderer.Animate(owner.Renderer.CreateSnapshotAdditionEffect(animate), true);
@@ -353,12 +356,12 @@ namespace SDLMMSharp.Engine
         }
         public virtual void CancelDrag()
         {
-        
+
         }
         public virtual void CancelMouseDown()
         {
             mouseIsDown = false;
-        
+
         }
 
         public IDraggableTarget GetDraggableTarget(int x, int y)
@@ -368,24 +371,46 @@ namespace SDLMMSharp.Engine
         public IDraggableTarget GetNestedDraggableTarget(IDraggableTarget target, int x, int y)
         {
             if (!target.IsHit(x, y)) return null;
-            foreach (IDraggableTarget entry in target.Controls)
+            LinkedListNode<IDraggableTarget> node = target.Controls.Last;
+            while(node != null)
             {
-                if (entry == null) continue;
-                if (!(entry is SpriteObject)) continue;
+                IDraggableTarget entry = node.Value;
+                LinkedListNode<IDraggableTarget> prev = node.Previous;
+                if (entry == null)
+                {
+                    node = prev;
+                    continue;
+                }
+                if (!(entry is SpriteObject))
+                {
+                    node = prev;
+                    continue;
+                }
                 SpriteObject attr = entry as SpriteObject;
                 if (attr == null || attr.isDisposed())
                 {
+                    node = prev;
                     continue;
                 }
 
                 if (!attr.Enabled)
                 {
+                    node = prev;
                     continue;
                 }
-
+                if (!attr.Visible)
+                {
+                    node = prev;
+                    continue;
+                }
+                if (!attr.CanClick)
+                {
+                    node = prev;
+                    continue;
+                }
                 if (attr != null)
                 {
-                    
+
                     IDraggableTarget additionalTest = attr.AdditionalHitTest(x, y);
                     if (additionalTest != null)
                     {
@@ -393,6 +418,7 @@ namespace SDLMMSharp.Engine
                     }
                     if (!attr.IsHit(x, y))
                     {
+                        node = prev;
                         continue;
                     }
                     if (attr.Resizer != null)
@@ -418,13 +444,13 @@ namespace SDLMMSharp.Engine
         }
         public IDraggableTarget GetDraggableTarget(int x, int y, bool selectOverlay)
         {
-            
+            if (owner.GetCurrentScene() == null) return null;
             IEnumerable<IDraggableTarget> target = owner.GetCurrentScene().GetClickableObjects();
             if (selectOverlay)
             {
                 target = owner.GetCurrentScene().GetOverlayToolObjects();
             }
-           
+
 
             foreach (IDraggableTarget entry in target)
             {
@@ -444,7 +470,15 @@ namespace SDLMMSharp.Engine
                     {
                         continue;
                     }
-                    
+                    if(!attr.Visible)
+                    {
+                        continue;
+                    }
+                    if(!attr.CanClick)
+                    {
+                        continue;
+                    }
+
                     if (attr != null)
                     {
                         IDraggableTarget additionalTest = attr.AdditionalHitTest(x, y);
@@ -460,7 +494,7 @@ namespace SDLMMSharp.Engine
                 }
                 catch (Exception ee)
                 {
-                    
+
                 }
 
             }

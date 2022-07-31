@@ -11,9 +11,13 @@ namespace SDLMMSharp.Engine.Controls
 {
     public class DraggableTarget : IDraggableTarget, IDisposable
     {
+        public static long StaticSeriesNo = 0;
+        public long SeriesNo = StaticSeriesNo++;
+        public event EventHandler SizeChanged;
         LinkedListNode<IDraggableTarget> m_ImageLayerHandler;
         public LinkedList<IDraggableTarget> Overlay = new LinkedList<IDraggableTarget>();
         public RectangleShape ClickableRange;
+        public Dictionary<String, object> dataset = new Dictionary<string, object>();
         public Func<DraggableTarget, bool> CanEnterDelegate;
         public Func<DraggableTarget,bool, int, int, bool> mouseActionDelegate;
         public Func<DraggableTarget, bool, int, int, bool> mouseMovedDelegate;
@@ -28,9 +32,29 @@ namespace SDLMMSharp.Engine.Controls
         bool mEnabled = true;
         protected bool supportEnterItem;
         bool mselected = false;
-        public LabelShape label;
-
-
+        
+        public Color BackColor
+        {
+            get
+            {
+                return shape.BackColor;
+            }
+            set
+            {
+                shape.BackColor = value;
+            }
+        }
+        public bool NeedCache
+        {
+            get
+            {
+                return shape.NeedCache;
+            }
+            set
+            {
+                shape.NeedCache = value;
+            }
+        }
         public Color ForeColor
         {
             get
@@ -47,13 +71,39 @@ namespace SDLMMSharp.Engine.Controls
             get
             {
                 return shape.Location.X;
-            }           
+            }
+            set
+            {
+                Point pt = shape.Location;
+                pt.X = value;
+                shape.Location = pt;
+            }
+        }
+        public int Right
+        {
+            get
+            {
+                return shape.Right;
+            }
+        }
+        public int Bottom
+        {
+            get
+            {
+                return shape.Bottom;
+            }
         }
         public int Top
         {
             get
             {
                 return shape.Location.Y;
+            }
+            set
+            {
+                Point pt = shape.Location;
+                pt.Y = value;
+                shape.Location = pt;
             }
         }
 
@@ -101,6 +151,32 @@ namespace SDLMMSharp.Engine.Controls
                 return Overlay;
             }
         }
+        public int GetIndexOfControl(IDraggableTarget ctrl)
+        {
+            int pt = 0;
+            for (LinkedListNode<IDraggableTarget> i = Controls.First; i != null; i = i.Next)
+            {
+                if (i.Value == ctrl)
+                {
+                    return pt;
+                }
+                ++pt;
+            }
+            return -1;
+        }
+        public IDraggableTarget GetControlAt(int idx)
+        {
+            int pt = 0;
+            for(LinkedListNode<IDraggableTarget> i=Controls.First; i!=null; i=i.Next)
+            {
+                if(pt == idx)
+                {
+                    return i.Value;
+                }
+                ++pt;
+            }
+            return null;
+        }
         public virtual void SetSelected(bool value)
         {
             mselected = value;
@@ -116,7 +192,7 @@ namespace SDLMMSharp.Engine.Controls
         {
             return mDisposed;
         }
-        public void Dispose()
+        public virtual void Dispose()
         {
             if (isDisposed()) return;
             try
@@ -131,7 +207,10 @@ namespace SDLMMSharp.Engine.Controls
                     ClickableRange.Dispose();
                     ClickableRange = null;
                 }
-                m_ImageLayerHandler.List.Remove(m_ImageLayerHandler);
+                if (m_ImageLayerHandler != null && m_ImageLayerHandler.List != null)
+                {
+                    m_ImageLayerHandler.List.Remove(m_ImageLayerHandler);
+                }
                 m_ImageLayerHandler = null;
             }
             catch(Exception ee)
@@ -197,25 +276,15 @@ namespace SDLMMSharp.Engine.Controls
                 if (!value)
                 {
                     shape.ImageAlpha = 128;
-                    if (label != null)
-                    {
-                        label.ImageAlpha = 128;
-                        label.ForeColor = Color.FromArgb(128,Color.Black);
-                    }
                 }
                 else
                 {
                     shape.ImageAlpha = 255;
-                    if (label != null)
-                    {
-                        label.ImageAlpha = 255;
-                        label.ForeColor = Color.FromArgb(255, Color.Black);
-                    }
                 }
             }
         }
 
-        public Image BackgroundImage
+        public BitmapWrap BackgroundImage
         {
             get
             {
@@ -234,7 +303,7 @@ namespace SDLMMSharp.Engine.Controls
             }
             set
             {
-                shape.Location = value;
+                SetPosition(value.X, value.Y);
             }
         }
         public Size Size
@@ -244,9 +313,8 @@ namespace SDLMMSharp.Engine.Controls
                 return shape.Size;
             }
             set
-            {
-                shape.Size = value;
-                OnSizeChanged();
+            {               
+                SetSize(value.Width,value.Height);
             }
         }
         public virtual void Refresh()
@@ -255,7 +323,10 @@ namespace SDLMMSharp.Engine.Controls
         }
         protected virtual void OnSizeChanged()
         {
-
+            if(SizeChanged!=null)
+            {
+                SizeChanged(this, EventArgs.Empty);
+            }
         }
 
         public int Width
@@ -264,12 +335,24 @@ namespace SDLMMSharp.Engine.Controls
             {
                 return shape.Rectangle.Width;
             }
+            set
+            {
+                Rectangle rect = shape.Rectangle;
+                rect.Width = value;
+                SetRectangle(rect);
+            }
         }
         public int Height
         {
             get
             {
                 return shape.Rectangle.Height;
+            }
+            set
+            {
+                Rectangle rect = shape.Rectangle;
+                rect.Height = value;
+                SetRectangle(rect);
             }
         }
         public Rectangle Bounds
@@ -281,6 +364,7 @@ namespace SDLMMSharp.Engine.Controls
             set
             {
                 this.shape.SetRectangle(value);
+                OnSizeChanged();
             }
         }
 
@@ -338,9 +422,11 @@ namespace SDLMMSharp.Engine.Controls
         {
             if (!Visible) return;
             if (shape == null) return;
+
             shape.Paint(gc);
             foreach(IDraggableTarget overlay in Overlay)
             {
+                if (!overlay.Visible) continue;
                 overlay.Paint(gc);
             }
         }
@@ -348,32 +434,37 @@ namespace SDLMMSharp.Engine.Controls
         public virtual void SetPosition(int x, int y)
         {
             if (shape == null) return;
-            Point orig = shape.Location;
             shape.SetLocation(x, y);
-            foreach(IDraggableTarget overlay in Overlay)
+            
+        }
+        public DraggableTarget()
+        {
+            shape.RectangleChanged += Shape_RectangleChanged;
+        }
+
+        private void Shape_RectangleChanged(object sender, KeyValuePair<Rectangle,Rectangle> e)
+        {
+            Point orig = e.Key.Location;
+            foreach (IDraggableTarget overlay in Overlay)
             {
                 Point pt = overlay.GetPosition();
-                pt.Offset(x - orig.X, y - orig.Y);
-                overlay.SetPosition(pt.X,pt.Y);
+                pt.Offset(e.Value.X - orig.X, e.Value.Y - orig.Y);
+                overlay.SetPosition(pt.X, pt.Y);
             }
+            OnSizeChanged();
         }
 
         public virtual void SetRectangle(Rectangle rect)
         {
             if (shape == null) return;
-            Point orig = shape.Location;
             shape.SetRectangle(rect);
-            foreach (IDraggableTarget overlay in Overlay)
-            {
-                Point pt = overlay.GetPosition();
-                pt.Offset(rect.X - orig.X, rect.Y - orig.Y);
-                overlay.SetPosition(pt.X, pt.Y);
-            }
+            
         }
 
         public virtual void SetSize(int width, int height)
         {
             shape.SetSize(width, height);
+            OnSizeChanged();
         }
 
         public Point mouseDownPosition;

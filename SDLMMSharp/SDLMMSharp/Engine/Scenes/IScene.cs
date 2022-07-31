@@ -17,7 +17,7 @@ namespace SDLMMSharp.Engine.Scenes
 
         void SetZoom(double zoom);
 
-        void SetSelection(IDraggableTarget draggable);
+        void SetSelection(IDraggableTarget draggable, bool on=true);
         IDraggableTarget GetSelection();
         void Start();
         void End();
@@ -36,5 +36,7 @@ namespace SDLMMSharp.Engine.Scenes
         EngineRenderer GetRenderer();
         IRenderer GetCanvas();
         void EnterItem(IDraggableTarget spriteObject);
+        bool OnKeyAction(int keycode, bool ctrl, bool ison);
+
     }
 }

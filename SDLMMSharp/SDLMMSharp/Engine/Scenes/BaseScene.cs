@@ -32,6 +32,7 @@ namespace SDLMMSharp.Engine.Scenes
         public virtual void End()
         {
             Parent.KeyboardAction -= OnKeyboardAction;
+
         }
         public IDraggableTarget AddDraggableObject(IDraggableTarget obj)
         {
@@ -51,7 +52,14 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual IEnumerable<IDraggableTarget> GetClickableObjects()
         {
-            return draggables;
+            LinkedListNode<IDraggableTarget> node = draggables.Last;
+            while(node != null)
+            {
+                LinkedListNode<IDraggableTarget> prev = node.Previous;
+                yield return node.Value;
+                node = prev;
+            }
+            
         }
         
         public virtual Point GetConstraintPosition(int x, int y)
@@ -89,6 +97,7 @@ namespace SDLMMSharp.Engine.Scenes
                 Rectangle rect = gc.GetClientArea();
                 gc.drawImage(BackgroundImage, 0, 0, rect.Width, rect.Height);
             }
+
             for(LinkedListNode<IDraggableTarget> obj = this.draggables.First; obj != null; obj = obj.Next)
             {
                 if (obj.Value == null) continue;
@@ -116,7 +125,7 @@ namespace SDLMMSharp.Engine.Scenes
             offset.Y = y;
         }
 
-        public virtual void SetSelection(IDraggableTarget draggable)
+        public virtual void SetSelection(IDraggableTarget draggable, bool on = true)
         {
             if (selection == draggable) return;
             SpriteObject obj = null;
@@ -178,9 +187,14 @@ namespace SDLMMSharp.Engine.Scenes
             return renderer.GetCanvas();
         }
 
+        public virtual bool OnKeyAction(int keycode, bool ctrl, bool ison)
+        {
+            return false;
+        }
         public virtual void EnterItem(IDraggableTarget spriteObject)
         {
             
         }
+
     }
 }

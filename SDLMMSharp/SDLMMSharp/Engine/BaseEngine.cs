@@ -53,9 +53,42 @@ namespace SDLMMSharp.Engine
         }
         public BaseEngine(IRenderer ctrl)
         {
-            this.BaseControl = ctrl;
-            this.renderer = new EngineRenderer(this);
+            SetBaseControl(ctrl);
             this.mouseHandler = new EngineMouseHandler(this);
+            
+        }
+        public void SetBaseControl(IRenderer ctrl)
+        {
+            if(ctrl == this.BaseControl)
+            {
+                return;
+            }
+            bool migrateActions = false;
+            if (this.BaseControl != null)
+            {
+                migrateActions = true;
+            }
+            this.BaseControl = ctrl;
+            if (this.renderer == null)
+            {
+                this.renderer = new EngineRenderer(this);
+            }
+            BaseControl.onKeyboard += OnKeyAction;
+            if (migrateActions)
+            {
+                foreach(IRendererDelegates.OnMouseButtonAction mouseact in mouseActions.Values)
+                {
+                    BaseControl.onMouseClickHandler += mouseact;
+                }
+                foreach (IRendererDelegates.OnMouseMoveAction mouseact in mouseMoveActions.Values)
+                {
+                    BaseControl.onMouseMoveHandler += mouseact;
+                }
+                foreach (IRendererDelegates.OnMouseWheelAction mouseact in mouseWheelActions.Values)
+                {
+                    BaseControl.onMouseWhell += mouseact;
+                }
+            }
         }
         public void Start()
         {
@@ -67,26 +100,41 @@ namespace SDLMMSharp.Engine
             this.renderer.End();
             this.mouseHandler.End();
         }
-        public event IRendererDelegates.OnKeyboardAction KeyboardAction
+        protected virtual void OnKeyAction(int keycode,bool ctrl,bool ison)
         {
-            add
+            do
             {
-                BaseControl.onKeyboard += value;
-            }
-            remove
+                if (renderer == null) break;
+                if (KeyboardAction == null) break;
+                IScene scene = renderer.GetCurrentScene();
+                if (scene == null) break;
+                if(scene.OnKeyAction(keycode, ctrl, ison))
+                {
+                    return;
+                }
+            } while (false);
+            if (KeyboardAction != null)
             {
-                BaseControl.onKeyboard -= value;
+                KeyboardAction(keycode, ctrl, ison);
             }
         }
+
+        protected Dictionary<IRendererDelegates.OnMouseButtonAction, IRendererDelegates.OnMouseButtonAction> mouseActions = new Dictionary<IRendererDelegates.OnMouseButtonAction, IRendererDelegates.OnMouseButtonAction>();
+        protected Dictionary<IRendererDelegates.OnMouseMoveAction, IRendererDelegates.OnMouseMoveAction> mouseMoveActions = new Dictionary<IRendererDelegates.OnMouseMoveAction, IRendererDelegates.OnMouseMoveAction>();
+        protected Dictionary<IRendererDelegates.OnMouseWheelAction, IRendererDelegates.OnMouseWheelAction> mouseWheelActions = new Dictionary<IRendererDelegates.OnMouseWheelAction, IRendererDelegates.OnMouseWheelAction>();
+
+        public event IRendererDelegates.OnKeyboardAction KeyboardAction;
         public event IRendererDelegates.OnMouseButtonAction MouseAction
         {
             add
             {
                 BaseControl.onMouseClickHandler += value;
+                this.mouseActions[value] = value;
             }
             remove
             {
                 BaseControl.onMouseClickHandler -= value;
+                this.mouseActions.Remove(value);
             }
         }
         public event IRendererDelegates.OnMouseMoveAction MouseMove
@@ -94,10 +142,12 @@ namespace SDLMMSharp.Engine
             add
             {
                 BaseControl.onMouseMoveHandler += value;
+                this.mouseMoveActions[value] = value;
             }
             remove
             {
                 BaseControl.onMouseMoveHandler -= value;
+                this.mouseMoveActions.Remove(value);
             }
         }
         public event IRendererDelegates.OnMouseWheelAction MouseWheel
@@ -105,10 +155,12 @@ namespace SDLMMSharp.Engine
             add
             {
                 BaseControl.onMouseWhell += value;
+                mouseWheelActions[value] = value;
             }
             remove
             {
                 BaseControl.onMouseWhell -= value;
+                mouseWheelActions.Remove(value);
             }
         }
 

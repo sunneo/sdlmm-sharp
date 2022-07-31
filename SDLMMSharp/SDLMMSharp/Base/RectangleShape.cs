@@ -10,6 +10,7 @@ namespace SDLMMSharp.Base
 {
     public class RectangleShape : IShape
     {
+        public bool NeedCache = true;
         public Rectangle Rectangle
         {
             get
@@ -18,8 +19,7 @@ namespace SDLMMSharp.Base
             }
             set
             {
-                rect = value;
-                RectangleChanged(this, rect);
+                SetRectangle(value);
             }
         }
         
@@ -27,7 +27,7 @@ namespace SDLMMSharp.Base
         public int StrokeWidth;
         public Color ForeColor;
         public Color BackColor;
-        public Image BackgroundImage
+        public BitmapWrap BackgroundImage
         {
             get
             {
@@ -35,17 +35,33 @@ namespace SDLMMSharp.Base
             }
             set
             {
-                mBackgroundImage = value;
-                backgroundChanged = true;
+                lock (imageLocker)
+                {
+                    if (mBackgroundImage != null) 
+                    {
+                        if(value != null && value !=mBackgroundImage)
+                        {
+                            backgroundChanged = true;
+                        }
+                    }
+                    else
+                    {
+                        if(value != null)
+                        {
+                            backgroundChanged = true;
+                        }
+                    }
+                    mBackgroundImage = value;
+                }
             }
         }
-        Image mBackgroundImage;
+        BitmapWrap mBackgroundImage;
         bool backgroundChanged = false;
         public int ImageAlpha;
         public bool Dashed = false;
-        protected Image cachedImage;
+        protected BitmapWrap cachedImage;
         protected bool disposed = false;
-        public event EventHandler<Rectangle> RectangleChanged;
+        public event EventHandler<KeyValuePair<Rectangle,Rectangle>> RectangleChanged;
         public event EventHandler<Action<IRenderer>> OverlayRequested;
         public Size Size
         {
@@ -132,18 +148,20 @@ namespace SDLMMSharp.Base
         }
         public void SetSize(Size size)
         {
+            Rectangle rect = this.rect;
             this.rect.Size = size;
             if (RectangleChanged != null)
             {
-                RectangleChanged(this, this.rect);
+                RectangleChanged(this, new KeyValuePair<Rectangle, Rectangle>(rect,this.rect));
             }
         }
         virtual public void SetRectangle(Rectangle rect)
         {
+            Rectangle orig = this.rect;
             this.rect = rect;
             if (RectangleChanged != null)
             {
-                RectangleChanged(this, this.rect);
+                RectangleChanged(this, new KeyValuePair<Rectangle, Rectangle>(orig, this.rect));
             }
 
         }
@@ -153,12 +171,16 @@ namespace SDLMMSharp.Base
         }
         virtual public void SetLocation(Point pt)
         {
-            this.rect.Location = pt;
+            Rectangle orig = this.rect;
+            Rectangle newOne = orig;
+            newOne.Location = pt;
+            this.rect = newOne;
             if (RectangleChanged != null)
             {
-                RectangleChanged(this, this.rect);
+                RectangleChanged(this, new KeyValuePair<Rectangle, Rectangle>(orig, this.rect));
             }
         }
+        object imageLocker = new object();
         virtual public void Dispose()
         {
             if (disposed) return;
@@ -172,10 +194,16 @@ namespace SDLMMSharp.Base
                 BackgroundImage.Dispose();
                 BackgroundImage = null;
             }
-            foreach (Delegate del in this.OverlayRequested.GetInvocationList())
-                Delegate.RemoveAll(del, del);
-            foreach (Delegate del in this.RectangleChanged.GetInvocationList())
-                Delegate.RemoveAll(del, del);
+            if (this.OverlayRequested != null)
+            {
+                foreach (Delegate del in this.OverlayRequested.GetInvocationList())
+                    Delegate.RemoveAll(del, del);
+            }
+            if (this.RectangleChanged != null)
+            {
+                foreach (Delegate del in this.RectangleChanged.GetInvocationList())
+                    Delegate.RemoveAll(del, del);
+            }
             disposed = true;
         }
 
@@ -191,7 +219,7 @@ namespace SDLMMSharp.Base
             {
                 gc.fillRect(rect, BackColor.ToArgb());
             }
-            if (BackgroundImage == null) return;
+            if (BackgroundImage == null || BackgroundImage.image==null) return;
             Rectangle targetRect = rect;
             Point location = rect.Location;
             if (ImageLayout!= ImageLayout.Stretch)
@@ -219,20 +247,72 @@ namespace SDLMMSharp.Base
                 }
                 targetRect.Size = newSize;
             }
-            if (cachedImage == null || backgroundChanged)
+            if (NeedCache)
             {
-                backgroundChanged = false;
-                cachedImage = new Bitmap(BackgroundImage, targetRect.Width, targetRect.Height);
+                lock (imageLocker)
+                {
+                    if (BackgroundImage != null && BackgroundImage.image!=null)
+                    {
+                        try
+                        {
+                            if (cachedImage == null || cachedImage.IsDisposed || backgroundChanged)
+                            {
+                                backgroundChanged = false;
+                                cachedImage = new BitmapWrap(new Bitmap(BackgroundImage, targetRect.Width, targetRect.Height));
+                            }
+                            else
+                            {
+                                if (cachedImage.Width != targetRect.Width || cachedImage.Height != targetRect.Height)
+                                {
+                                    if (cachedImage.image != BackgroundImage.image)
+                                    {
+                                        cachedImage.Dispose();
+                                    }
+                                    cachedImage = new BitmapWrap(new Bitmap(BackgroundImage, targetRect.Width, targetRect.Height));
+                                }
+                            }
+                        }
+                        catch (Exception ee)
+                        {
+                            Console.Error.WriteLine(ee.ToString());
+                            cachedImage = null;
+                        }
+                    }
+                    else
+                    {
+                        /*
+                        if (cachedImage!=null && cachedImage.image != null)
+                        {
+                            cachedImage.DoDispose();
+                        }
+                        cachedImage = null;
+                        */
+                    }
+                }
+                
+                if (cachedImage != null && cachedImage.image != null && !cachedImage.IsMarkedDisposed && !cachedImage.IsDisposed)
+                {
+                    gc.drawImage(cachedImage, location.X, location.Y, targetRect.Width, targetRect.Height);
+                }
             }
             else
             {
-                if (cachedImage.Width != targetRect.Width || cachedImage.Height != targetRect.Height)
+                lock (imageLocker)
                 {
-                    cachedImage.Dispose();
-                    cachedImage = new Bitmap(BackgroundImage, targetRect.Width, targetRect.Height);
+                    try
+                    {
+                        if (BackgroundImage != null && !BackgroundImage.IsDisposed)
+                        {
+                            gc.drawImage(BackgroundImage, location.X, location.Y, targetRect.Width, targetRect.Height);
+                        }
+                    }
+                    catch (Exception ee)
+                    {
+                        Console.Error.WriteLine(ee.ToString());
+                    }
                 }
             }
-            gc.drawImage(cachedImage, location.X, location.Y, targetRect.Width, targetRect.Height);
+            
         }
         protected IDisposable clipObject;
         virtual protected void SetClip(IRenderer gc)
