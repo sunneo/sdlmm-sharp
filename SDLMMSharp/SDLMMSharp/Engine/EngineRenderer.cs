@@ -193,9 +193,9 @@ namespace SDLMMSharp.Engine
             if (scene == null) return;
             try
             {
-                PaintAnimationPreEffect();
+                //PaintAnimationPreEffect();
                 scene.Paint(this.renderer);
-                PaintAnimationAfterEffect();
+                //PaintAnimationAfterEffect();
                 this.renderer.flush();
             }
             catch(Exception ee)

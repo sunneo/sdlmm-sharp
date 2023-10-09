@@ -109,17 +109,21 @@
       <DependentUpon>SliderCheckbox.cs</DependentUpon>
     </Compile>
     <Compile Include="Engine\BaseEngine.cs" />
+    <Compile Include="Engine\Controls\ButtonSpriteObject.cs" />
     <Compile Include="Engine\Controls\DraggableTarget.cs" />
     <Compile Include="Engine\Controls\GifRendererSpriteObject.cs" />
     <Compile Include="Engine\Controls\IDraggableTarget.cs" />
     <Compile Include="Engine\Controls\IMouseHandler.cs" />
+    <Compile Include="Engine\Controls\LabelShapeSpriteObject.cs" />
     <Compile Include="Engine\Controls\ResizerClazz.cs" />
     <Compile Include="Engine\Controls\SizerClazz.cs" />
+    <Compile Include="Engine\Controls\SliderSpriteObject.cs" />
     <Compile Include="Engine\Controls\SpriteObject.cs" />
     <Compile Include="Engine\EngineMouseHandler.cs" />
     <Compile Include="Engine\EngineRenderer.cs" />
     <Compile Include="Engine\Scenes\BaseScene.cs" />
     <Compile Include="Engine\Scenes\IScene.cs" />
+    <Compile Include="Engine\Scenes\UserControlScene.cs" />
     <Compile Include="GraphicsWrapper.cs" />
     <Compile Include="IGraphics.cs" />
     <Compile Include="IRenderer.cs" />

@@ -288,11 +288,16 @@ namespace SDLMMSharp.Engine.Controls
         {
             get
             {
+                if(shape == null)
+                {
+                    return null;
+                }
                 return shape.BackgroundImage;
             }
             set
             {
-                shape.BackgroundImage = value;
+                if(shape!=null)
+                    shape.BackgroundImage = value;
             }
         }
         public Point Location
@@ -441,8 +446,11 @@ namespace SDLMMSharp.Engine.Controls
         {
             shape.RectangleChanged += Shape_RectangleChanged;
         }
-
-        private void Shape_RectangleChanged(object sender, KeyValuePair<Rectangle,Rectangle> e)
+        /// <summary>
+        /// Handle on Shape Recangle Changed
+        /// </summary>
+        /// <param name="e">KeyValuePair of (Original, New)</param>
+        protected virtual void OnShapeRectangleChanged(KeyValuePair<Rectangle, Rectangle> e)
         {
             Point orig = e.Key.Location;
             foreach (IDraggableTarget overlay in Overlay)
@@ -452,6 +460,11 @@ namespace SDLMMSharp.Engine.Controls
                 overlay.SetPosition(pt.X, pt.Y);
             }
             OnSizeChanged();
+        }
+
+        protected virtual void Shape_RectangleChanged(object sender, KeyValuePair<Rectangle,Rectangle> e)
+        {
+            OnShapeRectangleChanged(e);
         }
 
         public virtual void SetRectangle(Rectangle rect)

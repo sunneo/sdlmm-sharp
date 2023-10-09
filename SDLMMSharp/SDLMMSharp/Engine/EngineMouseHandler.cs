@@ -56,14 +56,14 @@ namespace SDLMMSharp.Engine
             OnMouseWheel(x, y, scrollAmount);
         }
 
-        private void Ctrl_MouseMove(int x, int y, int btn, bool ison)
+        public void Ctrl_MouseMove(int x, int y, int btn, bool ison)
         {
             if (!enabled) return;
             OnMouseMove(x, y, btn, ison);
         }
 
 
-        private void Ctrl_MouseAction(int x, int y, int btn, bool ison)
+        public void Ctrl_MouseAction(int x, int y, int btn, bool ison)
         {
             if (!enabled) return;
             if (ison)
@@ -162,11 +162,19 @@ namespace SDLMMSharp.Engine
                 {
                     dragItem.SetPosition(newPos.X, newPos.Y);
                 }
+                else
+                {
+                    dragItem.mouseMoved(ison, x, y);
+                }
             }
             this.owner.InvalidateRenderer();
         }
         Point mouseDownPosition;
         Point dragItemOrigPosition;
+        public Point GetSelectionPosition()
+        {
+            return mouseDownPosition;
+        }
         protected virtual void OnMouseDown(int x, int y, int btn)
         {
             mouseIsDown = true;
@@ -177,9 +185,10 @@ namespace SDLMMSharp.Engine
                 selection = GetDraggableTarget(x, y);
                 if (selection == null) break;
             } while (false);
-            this.owner.GetCurrentScene().SetSelection(selection);
             mouseDownPosition.X = x;
             mouseDownPosition.Y = y;
+            if (this.owner.GetCurrentScene() == null) return;
+            this.owner.GetCurrentScene().SetSelection(selection);
             if (selection != null)
             {
                 dragItemOrigPosition = selection.GetPosition();
@@ -226,6 +235,7 @@ namespace SDLMMSharp.Engine
         protected virtual void OnMouseUp(int x, int y, int btn)
         {
             mouseIsDown = false;
+            if (this.owner.GetCurrentScene() == null) return;
             owner.GetCurrentScene().CancelDrag();
             EngineMouseHandler pthis = me;
             if (btn != 0)

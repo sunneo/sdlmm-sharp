@@ -17,6 +17,18 @@ namespace SDLMMSharp.Engine.Scenes
         protected LinkedList<IDraggableTarget> draggables = new LinkedList<IDraggableTarget>();
         protected LinkedList<IDraggableTarget> overlayTools = new LinkedList<IDraggableTarget>();
         IDraggableTarget selection;
+        protected int mBgColor = unchecked((int)(0xffffffff));
+        public int BackgroundColor
+        {
+            get
+            {
+                return mBgColor;
+            }
+            set
+            {
+                mBgColor = value;
+            }
+        }
         public Image BackgroundImage;
         public BaseEngine Parent
         {
@@ -91,7 +103,7 @@ namespace SDLMMSharp.Engine.Scenes
 
         public virtual void Paint(IRenderer gc)
         {
-            gc.Clear(unchecked((int)(0xffffffff)));
+            gc.Clear(mBgColor);
             if (this.BackgroundImage != null) 
             {
                 Rectangle rect = gc.GetClientArea();
