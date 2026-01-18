@@ -718,7 +718,8 @@ namespace SDLMMSharp
         }
         public static void RoundRectangle(Graphics graphic, int x, int y, int w, int h, float rad, Color color, int penWidth = 1)
         {
-            using (Pen pen = new Pen(new SolidBrush(color)))
+            using (SolidBrush brush = new SolidBrush(color))
+            using (Pen pen = new Pen(brush))
             {
                 pen.Width = penWidth;
                 if (rad <= 0)
