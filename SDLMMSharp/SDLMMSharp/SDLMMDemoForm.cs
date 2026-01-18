@@ -72,12 +72,13 @@ namespace SDLMMSharp
             
             public TestScene(BaseEngine engine):base(engine)
             {
-
+                InitializeComponent();
             }
             private SpriteObject createRectangle(int x,int y,int w,int h)
             {
                 SpriteObject obj = new SpriteObject();
                 obj.shape = new RectangleShape(new Rectangle(x,y,w,h),1,Color.Black, Color.White);
+                obj.IsDraggable = true;
                 return obj;
             }
             public override void Paint(IRenderer gc)
@@ -92,7 +93,7 @@ namespace SDLMMSharp
                 obj.shape.StrokeWidth = 1;
                 obj.shape.ForeColor = Color.Black;
                 obj.shape.BackColor = Color.Yellow;
-                
+                obj.IsDraggable = true;
                 return obj;
             }
             public override void InitializeComponent()
