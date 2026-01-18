@@ -588,6 +588,8 @@ namespace SDLMMSharp
                 }
                 if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppPArgb && bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
                 {
+                    System.Drawing.Bitmap oldBmp = bmp;
+                    bool disposeOldBmp = needDispose;
                     needDispose = true;
                     System.Drawing.Bitmap newBmp = new System.Drawing.Bitmap(_bmp.Width,_bmp.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                     using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(newBmp))
@@ -596,6 +598,10 @@ namespace SDLMMSharp
                         g.Flush();
                     }
                     bmp = newBmp;
+                    if (disposeOldBmp)
+                    {
+                        oldBmp.Dispose();
+                    }
                 }
                 var mem = bmp.LockBits(new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
                 
@@ -665,25 +671,33 @@ namespace SDLMMSharp
         }
         void dxFillPolygon(RenderTarget target, System.Drawing.PointF[] points, Brush brush, int offsetX = 0, int offsetY = 0)
         {
-            PathGeometry geo = new PathGeometry(target.Factory);
-            RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
-            var sink1 = geo.Open();
-            sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
-            sink1.AddLines(path);
-            sink1.EndFigure(new FigureEnd());
-            sink1.Close();
-            target.FillGeometry(geo, brush);
+            using (PathGeometry geo = new PathGeometry(target.Factory))
+            {
+                RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
+                using (var sink1 = geo.Open())
+                {
+                    sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+                    sink1.AddLines(path);
+                    sink1.EndFigure(new FigureEnd());
+                    sink1.Close();
+                }
+                target.FillGeometry(geo, brush);
+            }
         }
         void dxFillPolygon(RenderTarget target, System.Drawing.Point[] points, Brush brush, int offsetX = 0, int offsetY = 0)
         {
-            PathGeometry geo = new PathGeometry(target.Factory);
-            RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
-            var sink1 = geo.Open();
-            sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
-            sink1.AddLines(path);
-            sink1.EndFigure(new FigureEnd());
-            sink1.Close();
-            target.FillGeometry(geo, brush);
+            using (PathGeometry geo = new PathGeometry(target.Factory))
+            {
+                RawVector2[] path = Vector2sFromGDIPoints(points, 1, offsetX, offsetY);
+                using (var sink1 = geo.Open())
+                {
+                    sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+                    sink1.AddLines(path);
+                    sink1.EndFigure(new FigureEnd());
+                    sink1.Close();
+                }
+                target.FillGeometry(geo, brush);
+            }
         }
         public void fillPolygon(System.Drawing.Point[] points, System.Drawing.Brush gdibrush, int offsetX = 0, int offsetY = 0)
         {
@@ -727,21 +741,27 @@ namespace SDLMMSharp
             
             AddDrawRequest((target) =>
             {
-                PathGeometry geo = new PathGeometry(target.Factory);
-                var sink1 = geo.Open();
-                sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
-                sink1.AddLines(path);
-                sink1.EndFigure(new FigureEnd());
-                sink1.Close();
-                if (dashed)
+                using (PathGeometry geo = new PathGeometry(target.Factory))
                 {
-                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width, GetDashedStyle(target));
+                    using (var sink1 = geo.Open())
+                    {
+                        sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+                        sink1.AddLines(path);
+                        sink1.EndFigure(new FigureEnd());
+                        sink1.Close();
+                    }
+                    using (var brush = this.GetBrushFromColor(target, color))
+                    {
+                        if (dashed)
+                        {
+                            target.DrawGeometry(geo, brush, width, GetDashedStyle(target));
+                        }
+                        else
+                        {
+                            target.DrawGeometry(geo, brush, width);
+                        }
+                    }
                 }
-                else
-                {
-                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width);
-                }
-                
             });
         }
         public void drawPolygon(System.Drawing.PointF[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0)
@@ -750,21 +770,27 @@ namespace SDLMMSharp
 
             AddDrawRequest((target) =>
             {
-                PathGeometry geo = new PathGeometry(target.Factory);
-                var sink1 = geo.Open();
-                sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
-                sink1.AddLines(path);
-                sink1.EndFigure(new FigureEnd());
-                sink1.Close();
-                if (dashed)
+                using (PathGeometry geo = new PathGeometry(target.Factory))
                 {
-                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width, GetDashedStyle(target));
+                    using (var sink1 = geo.Open())
+                    {
+                        sink1.BeginFigure(Vector2FromGDIPoint(points[0]), new FigureBegin());
+                        sink1.AddLines(path);
+                        sink1.EndFigure(new FigureEnd());
+                        sink1.Close();
+                    }
+                    using (var brush = this.GetBrushFromColor(target, color))
+                    {
+                        if (dashed)
+                        {
+                            target.DrawGeometry(geo, brush, width, GetDashedStyle(target));
+                        }
+                        else
+                        {
+                            target.DrawGeometry(geo, brush, width);
+                        }
+                    }
                 }
-                else
-                {
-                    target.DrawGeometry(geo, this.GetBrushFromColor(target, color), width);
-                }
-
             });
         }
         public void drawImage(System.Drawing.Image bmp, int x, int y, int w, int h)

@@ -711,22 +711,26 @@ namespace SDLMMSharp
                 drawRect(x, y, w, h, color);
                 return;
             }
-            GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), rad, rad);
-
-            graphic.DrawPath(GetPenFromColor(color, penWidth), path);
+            using (GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), rad, rad))
+            {
+                graphic.DrawPath(GetPenFromColor(color, penWidth), path);
+            }
         }
         public static void RoundRectangle(Graphics graphic, int x, int y, int w, int h, float rad, Color color, int penWidth = 1)
         {
-            Pen pen = new Pen(new SolidBrush(color));
-            pen.Width = penWidth;
-            if (rad <= 0)
+            using (Pen pen = new Pen(new SolidBrush(color)))
             {
-                graphic.DrawRectangle(pen, x, y, w, h);
-                return;
+                pen.Width = penWidth;
+                if (rad <= 0)
+                {
+                    graphic.DrawRectangle(pen, x, y, w, h);
+                    return;
+                }
+                using (GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), rad, rad))
+                {
+                    graphic.DrawPath(pen, path);
+                }
             }
-            GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), rad, rad);
-
-            graphic.DrawPath(pen, path);
         }
         public void fillRoundRect(int x, int y, int w, int h, float radx, float rady, int color)
         {
@@ -737,8 +741,10 @@ namespace SDLMMSharp
                 return;
             }
 
-            GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), radx, rady);
-            graphic.FillPath(GetBrushFromColor(color), path);
+            using (GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), radx, rady))
+            {
+                graphic.FillPath(GetBrushFromColor(color), path);
+            }
         }
         public void fillRoundRect(int x, int y, int w, int h, float rad, int color)
         {
@@ -752,8 +758,10 @@ namespace SDLMMSharp
                 fillRect(x, y, w, h, brush);
                 return;
             }
-            GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), radx, rady);
-            graphic.FillPath(brush, path);
+            using (GraphicsPath path = MakeRoundedRect(new RectangleF(x, y, w, h), radx, rady))
+            {
+                graphic.FillPath(brush, path);
+            }
         }
         public void fillRoundRect(int x, int y, int w, int h, float rad, Brush brush)
         {
@@ -991,9 +999,17 @@ namespace SDLMMSharp
             {
                 int origh = pixels.Length / w;
                 GCHandle handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
-                Bitmap bmp = new Bitmap(w, origh, w * 4, PixelFormat.Format32bppArgb, handle.AddrOfPinnedObject());
-                graphic.DrawImageUnscaledAndClipped(bmp, new Rectangle(x, y, w, h));
-                handle.Free();
+                try
+                {
+                    using (Bitmap bmp = new Bitmap(w, origh, w * 4, PixelFormat.Format32bppArgb, handle.AddrOfPinnedObject()))
+                    {
+                        graphic.DrawImageUnscaledAndClipped(bmp, new Rectangle(x, y, w, h));
+                    }
+                }
+                finally
+                {
+                    handle.Free();
+                }
             }
         }
         public void drawPixels(int[] pixels, int x, int y, int w, int h, int transkey)
@@ -1002,11 +1018,12 @@ namespace SDLMMSharp
             //lock (canvas)
             {
                 int origh = pixels.Length / w;
-                Bitmap bmp = new Bitmap(w, origh);
-                BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, w, h), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp.PixelFormat);
-                unsafe
+                using (Bitmap bmp = new Bitmap(w, origh))
                 {
-                    int* pixelsMap = (int*)bmpData.Scan0;
+                    BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, w, h), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp.PixelFormat);
+                    unsafe
+                    {
+                        int* pixelsMap = (int*)bmpData.Scan0;
 #if false
                 for(int i=0;i<pixels.Length; ++i){
                    Color c;
@@ -1021,25 +1038,26 @@ namespace SDLMMSharp
                    bmp.SetPixel(i % w, i / w, c);      
                 }
 #else
-                    Parallel.For(0, pixels.Length, (i) =>
-                    {
-                        Color c;
-                        if ((pixels[i] & 0xffffff) == transkey)
+                        Parallel.For(0, pixels.Length, (i) =>
                         {
-                            c = Color.FromArgb(0);
-                        }
-                        else
-                        {
-                            c = coveredColor(pixels[i]);
-                            pixelsMap[i] = c.ToArgb();
-                        }
+                            Color c;
+                            if ((pixels[i] & 0xffffff) == transkey)
+                            {
+                                c = Color.FromArgb(0);
+                            }
+                            else
+                            {
+                                c = coveredColor(pixels[i]);
+                                pixelsMap[i] = c.ToArgb();
+                            }
 
-                        //bmp.SetPixel(i % w, i / w, c);
-                    });
-                }
+                            //bmp.SetPixel(i % w, i / w, c);
+                        });
+                    }
 #endif
-                bmp.UnlockBits(bmpData);
-                graphic.DrawImageUnscaledAndClipped(bmp, new Rectangle(x, y, w, h));
+                    bmp.UnlockBits(bmpData);
+                    graphic.DrawImageUnscaledAndClipped(bmp, new Rectangle(x, y, w, h));
+                }
             }
         }
         public void stretchpixels(int[] pixels, int w, int h, int[] output, int w2, int h2)
@@ -1077,24 +1095,26 @@ namespace SDLMMSharp
             //lock (canvas)
             {
                 int origh = pixels.Length / w;
-                Bitmap bmp = new Bitmap(w, origh);
-                if (h > origh)
+                using (Bitmap bmp = new Bitmap(w, origh))
                 {
-                    h = origh;
-                }
-                BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, w, h), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp.PixelFormat);
-                unsafe
-                {
-                    int* pixelsMap = (int*)bmpData.Scan0;
-                    for (int i = 0; i < pixels.Length; ++i)
+                    if (h > origh)
                     {
-                        Color c = coveredColor(pixels[i]);
-                        pixelsMap[i] = c.ToArgb();
-                        //bmp.SetPixel(i % w, i / w, c);
+                        h = origh;
                     }
+                    BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, w, h), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp.PixelFormat);
+                    unsafe
+                    {
+                        int* pixelsMap = (int*)bmpData.Scan0;
+                        for (int i = 0; i < pixels.Length; ++i)
+                        {
+                            Color c = coveredColor(pixels[i]);
+                            pixelsMap[i] = c.ToArgb();
+                            //bmp.SetPixel(i % w, i / w, c);
+                        }
+                    }
+                    bmp.UnlockBits(bmpData);
+                    graphic.DrawImageUnscaledAndClipped(bmp, new Rectangle(x, y, w, h));
                 }
-                bmp.UnlockBits(bmpData);
-                graphic.DrawImageUnscaledAndClipped(bmp, new Rectangle(x, y, w, h));
             }
         }
         public void loadimage(String name, out int[] pixels, out int w, out int h)
@@ -1200,36 +1220,52 @@ namespace SDLMMSharp
                 return;
             }
             Bitmap newBmp = new Bitmap(bmp);
-            lock (drawImageLocker)
+            Bitmap bmp2ToDispose = null;
+            try
             {
-                if (alpha < 0) alpha = 0;
+                lock (drawImageLocker)
+                {
+                    if (alpha < 0) alpha = 0;
 
-                int Length = bmp.Width * bmp.Height;
-                Bitmap bmp2 = bmp;
-                if (bmp.PixelFormat != PixelFormat.Format32bppArgb)
-                {
-                    bmp2 = bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), PixelFormat.Format32bppArgb);
-                }
-                BitmapData bmpData0 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp2.PixelFormat);
-                BitmapData bmpData = newBmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp2.PixelFormat);
-                unsafe
-                {
-                    int* pixelsMap0 = (int*)bmpData0.Scan0;
-                    int* pixelsMap = (int*)bmpData.Scan0;
-                    for (int i = 0; i < Length; ++i)
+                    int Length = bmp.Width * bmp.Height;
+                    Bitmap bmp2 = bmp;
+                    if (bmp.PixelFormat != PixelFormat.Format32bppArgb)
                     {
-                        Color c = Color.FromArgb(pixelsMap0[i]);
-                        int ialpha = (int)(c.A * alpha);
-                        if (ialpha < 0) ialpha = 0;
-                        if (ialpha > 255) ialpha = 255;
-                        pixelsMap[i] = Color.FromArgb(ialpha, c.R, c.G, c.B).ToArgb();
-                        //bmp.SetPixel(i % w, i / w, c);
+                        bmp2 = bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), PixelFormat.Format32bppArgb);
+                        bmp2ToDispose = bmp2;
                     }
+                    BitmapData bmpData0 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp2.PixelFormat);
+                    BitmapData bmpData = newBmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp2.PixelFormat);
+                    unsafe
+                    {
+                        int* pixelsMap0 = (int*)bmpData0.Scan0;
+                        int* pixelsMap = (int*)bmpData.Scan0;
+                        for (int i = 0; i < Length; ++i)
+                        {
+                            Color c = Color.FromArgb(pixelsMap0[i]);
+                            int ialpha = (int)(c.A * alpha);
+                            if (ialpha < 0) ialpha = 0;
+                            if (ialpha > 255) ialpha = 255;
+                            pixelsMap[i] = Color.FromArgb(ialpha, c.R, c.G, c.B).ToArgb();
+                            //bmp.SetPixel(i % w, i / w, c);
+                        }
+                    }
+                    UnlockBitmapData(bmp2, bmpData0);
+                    UnlockBitmapData(newBmp, bmpData);
                 }
-                UnlockBitmapData(bmp2, bmpData0);
-                UnlockBitmapData(newBmp, bmpData);
+                drawImage(newBmp, x, y, w, h);
             }
-            drawImage(newBmp, x, y, w, h);
+            finally
+            {
+                if (newBmp != null)
+                {
+                    newBmp.Dispose();
+                }
+                if (bmp2ToDispose != null)
+                {
+                    bmp2ToDispose.Dispose();
+                }
+            }
         }
 
         private void UnlockBitmapData(Bitmap bmp, BitmapData bmpdata)
@@ -1264,42 +1300,58 @@ namespace SDLMMSharp
                 needDispose = true;
             }
             Bitmap newBmp = new Bitmap(bmp);
-            lock (drawImageLocker)
+            Bitmap bmp2ToDispose = null;
+            try
             {
-                if (alpha < 0) alpha = 0;
-                int Length = bmp.Width * bmp.Height;
+                lock (drawImageLocker)
+                {
+                    if (alpha < 0) alpha = 0;
+                    int Length = bmp.Width * bmp.Height;
 
-                Bitmap bmp2 = bmp;
-                
-                if ( bmp.PixelFormat != PixelFormat.Format32bppArgb)
-                {
-                    bmp2 = bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), PixelFormat.Format32bppArgb);
-                }
-                BitmapData bmpData0 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp2.PixelFormat);
-                BitmapData bmpData = newBmp.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp2.PixelFormat);
-                unsafe
-                {
-                    int* pixelsMap0 = (int*)bmpData0.Scan0;
-                    int* pixelsMap = (int*)bmpData.Scan0;
-                    Parallel.For(0, Length, (i) =>
+                    Bitmap bmp2 = bmp;
+                    
+                    if ( bmp.PixelFormat != PixelFormat.Format32bppArgb)
                     {
-                        if (i >= Length) return;
-                        Color c = Color.FromArgb(pixelsMap0[i]);
-                        int ialpha = (int)(c.A * alpha);
-                        if (ialpha < 0) ialpha = 0;
-                        if (ialpha > 255) ialpha = 255;
-                        pixelsMap[i] = Color.FromArgb(ialpha, c.R, c.G, c.B).ToArgb();
-                        //bmp.SetPixel(i % w, i / w, c);
-                    });
+                        bmp2 = bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), PixelFormat.Format32bppArgb);
+                        bmp2ToDispose = bmp2;
+                    }
+                    BitmapData bmpData0 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp2.PixelFormat);
+                    BitmapData bmpData = newBmp.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, bmp2.PixelFormat);
+                    unsafe
+                    {
+                        int* pixelsMap0 = (int*)bmpData0.Scan0;
+                        int* pixelsMap = (int*)bmpData.Scan0;
+                        Parallel.For(0, Length, (i) =>
+                        {
+                            if (i >= Length) return;
+                            Color c = Color.FromArgb(pixelsMap0[i]);
+                            int ialpha = (int)(c.A * alpha);
+                            if (ialpha < 0) ialpha = 0;
+                            if (ialpha > 255) ialpha = 255;
+                            pixelsMap[i] = Color.FromArgb(ialpha, c.R, c.G, c.B).ToArgb();
+                            //bmp.SetPixel(i % w, i / w, c);
+                        });
+                    }
+                    UnlockBitmapData(bmp2, bmpData0);
+                    UnlockBitmapData(newBmp, bmpData);
                 }
-                UnlockBitmapData(bmp2, bmpData0);
-                UnlockBitmapData(newBmp, bmpData);
+                if (needDispose)
+                {
+                    bmp.Dispose();
+                }
+                drawImage(newBmp, x, y, w, h);
             }
-            if (needDispose)
+            finally
             {
-                bmp.Dispose();
+                if (newBmp != null)
+                {
+                    newBmp.Dispose();
+                }
+                if (bmp2ToDispose != null)
+                {
+                    bmp2ToDispose.Dispose();
+                }
             }
-            drawImage(newBmp, x, y, w, h);
         }
         public void Clear(int color)
         {
@@ -1408,18 +1460,22 @@ namespace SDLMMSharp
         public void fillPolygon(PointF[] points, Brush brush, int offsetX = 0, int offsetY = 0)
         {
             hasDrawRequest = true;
-            GraphicsPath path = MakePolygonPath(points);
-            graphic.TranslateTransform(offsetX, offsetY);
-            graphic.FillPath(brush, path);
-            graphic.TranslateTransform(-offsetX, -offsetY);
+            using (GraphicsPath path = MakePolygonPath(points))
+            {
+                graphic.TranslateTransform(offsetX, offsetY);
+                graphic.FillPath(brush, path);
+                graphic.TranslateTransform(-offsetX, -offsetY);
+            }
         }
         public void fillPolygon(Point[] points, Brush brush, int offsetX = 0, int offsetY = 0)
         {
             hasDrawRequest = true;
-            GraphicsPath path = MakePolygonPath(points);
-            graphic.TranslateTransform(offsetX, offsetY);
-            graphic.FillPath(brush, path);
-            graphic.TranslateTransform(-offsetX, -offsetY);
+            using (GraphicsPath path = MakePolygonPath(points))
+            {
+                graphic.TranslateTransform(offsetX, offsetY);
+                graphic.FillPath(brush, path);
+                graphic.TranslateTransform(-offsetX, -offsetY);
+            }
         }
         public void drawPolygon(PointF[] points, int color, int width, bool dashed = false, int offsetX = 0, int offsetY = 0)
         {
@@ -1434,11 +1490,13 @@ namespace SDLMMSharp
                         pen.DashStyle = DashStyle.DashDotDot;
                         pen.DashPattern = drawRectDefaultDashPattern;
                     }
-                    GraphicsPath path = MakePolygonPath(points);
-                    Point orig = graphic.RenderingOrigin;
-                    graphic.TranslateTransform(offsetX, offsetY);
-                    graphic.DrawPath(pen, path);
-                    graphic.TranslateTransform(-offsetX, -offsetY);
+                    using (GraphicsPath path = MakePolygonPath(points))
+                    {
+                        Point orig = graphic.RenderingOrigin;
+                        graphic.TranslateTransform(offsetX, offsetY);
+                        graphic.DrawPath(pen, path);
+                        graphic.TranslateTransform(-offsetX, -offsetY);
+                    }
                 }
             }
         }
@@ -1455,11 +1513,13 @@ namespace SDLMMSharp
                         pen.DashStyle = DashStyle.DashDotDot;
                         pen.DashPattern = drawRectDefaultDashPattern;
                     }
-                    GraphicsPath path = MakePolygonPath(points);
-                    Point orig = graphic.RenderingOrigin;
-                    graphic.TranslateTransform(offsetX, offsetY);
-                    graphic.DrawPath(pen, path);
-                    graphic.TranslateTransform(-offsetX, -offsetY);
+                    using (GraphicsPath path = MakePolygonPath(points))
+                    {
+                        Point orig = graphic.RenderingOrigin;
+                        graphic.TranslateTransform(offsetX, offsetY);
+                        graphic.DrawPath(pen, path);
+                        graphic.TranslateTransform(-offsetX, -offsetY);
+                    }
                 }
             }
         }
