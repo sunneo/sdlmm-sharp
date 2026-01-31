@@ -45,6 +45,10 @@ namespace SDLMMSharp
         Surface surface;
         SharpDX.Direct2D1.RenderTarget d2dRenderTarget;
         RawRectangleF clientArea;
+        // Cached bitmap for drawPixels optimization
+        private Bitmap cachedPixelBitmap;
+        private int cachedPixelBitmapWidth;
+        private int cachedPixelBitmapHeight;
         public IRendererDelegates.OnMouseButtonAction onMouseClickHandler { get; set; }
         public IRendererDelegates.OnMouseMoveAction onMouseMoveHandler { get; set; }
         public IRendererDelegates.OnKeyboardAction onKeyboard { get; set; }
@@ -350,6 +354,12 @@ namespace SDLMMSharp
         {
             lock (_drawLock)
             {
+                // Dispose cached pixel bitmap
+                if (cachedPixelBitmap != null)
+                {
+                    cachedPixelBitmap.Dispose();
+                    cachedPixelBitmap = null;
+                }
                 if (surface != null)
                     surface.Dispose();
                 if (d2dRenderTarget != null)
@@ -1203,13 +1213,17 @@ namespace SDLMMSharp
         }
         public void drawPixels(int[] pixels, int x, int y, int w, int h)
         {
-            var bitmapProperties = new BitmapProperties(new PixelFormat(Format.B8G8R8A8_UNorm, AlphaMode.Ignore));
-            using (Bitmap gameBitmap = new Bitmap(d2dRenderTarget, new Size2(w, h), bitmapProperties))
+            // Optimized: reuse cached bitmap if dimensions match
+            if (cachedPixelBitmap == null || cachedPixelBitmapWidth != w || cachedPixelBitmapHeight != h)
             {
-                gameBitmap.CopyFromMemory(pixels, w * 4);
-                d2dRenderTarget.DrawBitmap(gameBitmap, clientArea, 1.0f, BitmapInterpolationMode.NearestNeighbor);
+                cachedPixelBitmap?.Dispose();
+                var bitmapProperties = new BitmapProperties(new PixelFormat(Format.B8G8R8A8_UNorm, AlphaMode.Ignore));
+                cachedPixelBitmap = new Bitmap(d2dRenderTarget, new Size2(w, h), bitmapProperties);
+                cachedPixelBitmapWidth = w;
+                cachedPixelBitmapHeight = h;
             }
-
+            cachedPixelBitmap.CopyFromMemory(pixels, w * 4);
+            d2dRenderTarget.DrawBitmap(cachedPixelBitmap, clientArea, 1.0f, BitmapInterpolationMode.NearestNeighbor);
         }
         public System.Drawing.Bitmap flushToBMP(int width,int height)
         {
