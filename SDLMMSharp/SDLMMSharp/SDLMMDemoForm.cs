@@ -1,4 +1,5 @@
-﻿using SDLMMSharp.Base;
+﻿using SDLMMSharp.Babylon3D;
+using SDLMMSharp.Base;
 using SDLMMSharp.Engine;
 using SDLMMSharp.Engine.Controls;
 using SDLMMSharp.Engine.Scenes;
@@ -24,7 +25,8 @@ namespace SDLMMSharp
 
         private void buttonOpenTestScene_Click(object sender, EventArgs e)
         {
-            FormTestScene frm = new FormTestScene();
+            //FormTestScene frm = new FormTestScene();
+            Babylon3DCubeDemo frm = new Babylon3DCubeDemo();
             frm.Show(this);
         }
     }

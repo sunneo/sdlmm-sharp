@@ -129,9 +129,13 @@
     <Compile Include="Babylon3D\Mesh.cs" />
     <Compile Include="Babylon3D\Device.cs" />
     <Compile Include="Babylon3D\Babylon3DScene.cs" />
-    <Compile Include="Babylon3D\Babylon3DCubeDemo.cs" />
+    <Compile Include="Babylon3D\Babylon3DCubeDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Babylon3D\SceneLoader.cs" />
-    <Compile Include="Babylon3D\SceneViewerForm.cs" />
+    <Compile Include="Babylon3D\SceneViewerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="GraphicsWrapper.cs" />
     <Compile Include="IGraphics.cs" />
     <Compile Include="IRenderer.cs" />

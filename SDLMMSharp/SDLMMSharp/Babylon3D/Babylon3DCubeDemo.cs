@@ -33,7 +33,17 @@ namespace SDLMMSharp.Babylon3D
             this.MaximizeBox = false;
 
             // Create renderer control
-            renderer = new SharpDXControl(800, 600);
+            SharpDXControl sharpDx = new SharpDXControl(800, 600);
+            sharpDx.Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right | AnchorStyles.Bottom;
+            sharpDx.Dock = DockStyle.Fill;
+            sharpDx.BackColor = Color.White;
+            sharpDx.setUseAlpha(true);
+            sharpDx.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+            sharpDx.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+            sharpDx.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            sharpDx.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+            sharpDx.SmoothMode = System.Drawing.Drawing2D.SmoothingMode.HighSpeed;
+            renderer = sharpDx;
             if (renderer is Control ctrl)
             {
                 ctrl.Dock = DockStyle.Fill;
