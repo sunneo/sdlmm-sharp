@@ -1223,7 +1223,7 @@ namespace SDLMMSharp
                 cachedPixelBitmapHeight = h;
             }
             cachedPixelBitmap.CopyFromMemory(pixels, w * 4);
-            d2dRenderTarget.DrawBitmap(cachedPixelBitmap, clientArea, 1.0f, BitmapInterpolationMode.NearestNeighbor);
+            d2dRenderTarget.DrawBitmap(cachedPixelBitmap, new RawRectangleF(x, y, x + w, y + h), 1.0f, BitmapInterpolationMode.NearestNeighbor);
         }
         public System.Drawing.Bitmap flushToBMP(int width,int height)
         {
