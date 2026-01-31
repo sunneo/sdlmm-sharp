@@ -11,6 +11,7 @@ namespace SDLMMSharp.Babylon3D
     public class Device : IDisposable
     {
         private const float PERSPECTIVE_EPSILON = 0.0001f;
+        private const int CLEAR_CHUNK_SIZE = 1024; // Process in chunks for better cache utilization
 
         public int WorkingWidth { get; private set; }
         public int WorkingHeight { get; private set; }
@@ -33,13 +34,12 @@ namespace SDLMMSharp.Babylon3D
         public void Clear()
         {
             int e = WorkingHeight * WorkingWidth;
-            int chunkSize = 1024; // Process in chunks for better cache utilization
-            int numChunks = (e + chunkSize - 1) / chunkSize;
+            int numChunks = (e + CLEAR_CHUNK_SIZE - 1) / CLEAR_CHUNK_SIZE;
 
             Parallel.For(0, numChunks, chunk =>
             {
-                int start = chunk * chunkSize;
-                int end = Math.Min(start + chunkSize, e);
+                int start = chunk * CLEAR_CHUNK_SIZE;
+                int end = Math.Min(start + CLEAR_CHUNK_SIZE, e);
                 for (int i = start; i < end; i++)
                 {
                     depthBuffer[i] = int.MaxValue;
@@ -55,13 +55,12 @@ namespace SDLMMSharp.Babylon3D
         public void Clear(int color)
         {
             int e = WorkingHeight * WorkingWidth;
-            int chunkSize = 1024;
-            int numChunks = (e + chunkSize - 1) / chunkSize;
+            int numChunks = (e + CLEAR_CHUNK_SIZE - 1) / CLEAR_CHUNK_SIZE;
 
             Parallel.For(0, numChunks, chunk =>
             {
-                int start = chunk * chunkSize;
-                int end = Math.Min(start + chunkSize, e);
+                int start = chunk * CLEAR_CHUNK_SIZE;
+                int end = Math.Min(start + CLEAR_CHUNK_SIZE, e);
                 for (int i = start; i < end; i++)
                 {
                     depthBuffer[i] = int.MaxValue;

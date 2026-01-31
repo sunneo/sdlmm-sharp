@@ -104,17 +104,17 @@ namespace SDLMMSharp.Babylon3D
             {
                 return ReadArray();
             }
-            else if (c == 't' && json.Substring(pos, 4) == "true")
+            else if (c == 't' && pos + 4 <= json.Length && json.Substring(pos, 4) == "true")
             {
                 pos += 4;
                 return true;
             }
-            else if (c == 'f' && json.Substring(pos, 5) == "false")
+            else if (c == 'f' && pos + 5 <= json.Length && json.Substring(pos, 5) == "false")
             {
                 pos += 5;
                 return false;
             }
-            else if (c == 'n' && json.Substring(pos, 4) == "null")
+            else if (c == 'n' && pos + 4 <= json.Length && json.Substring(pos, 4) == "null")
             {
                 pos += 4;
                 return null;
