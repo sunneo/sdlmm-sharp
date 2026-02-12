@@ -109,6 +109,70 @@ namespace SDLMMSharp.Babylon3D
         }
 
         /// <summary>
+        /// Create a sphere mesh using UV sphere generation.
+        /// </summary>
+        /// <param name="name">Name of the sphere</param>
+        /// <param name="radius">Radius of the sphere</param>
+        /// <param name="segments">Number of horizontal segments (longitude)</param>
+        /// <param name="rings">Number of vertical rings (latitude)</param>
+        public static Mesh CreateSphere(string name = "Sphere", float radius = 1.0f, int segments = 16, int rings = 16)
+        {
+            int vertexCount = (rings + 1) * (segments + 1);
+            int faceCount = rings * segments * 2;
+
+            Mesh mesh = new Mesh(name, vertexCount, faceCount);
+
+            // Generate vertices
+            int vertIdx = 0;
+            for (int ring = 0; ring <= rings; ring++)
+            {
+                float v = (float)ring / rings;
+                float phi = v * (float)Math.PI;
+
+                for (int segment = 0; segment <= segments; segment++)
+                {
+                    float u = (float)segment / segments;
+                    float theta = u * (float)Math.PI * 2;
+
+                    float x = (float)(Math.Cos(theta) * Math.Sin(phi));
+                    float y = (float)Math.Cos(phi);
+                    float z = (float)(Math.Sin(theta) * Math.Sin(phi));
+
+                    Vector3 position = new Vector3(x * radius, y * radius, z * radius);
+                    Vector3 normal = new Vector3(x, y, z); // Normal points outward from center
+
+                    mesh.Vertices[vertIdx] = new Vertex
+                    {
+                        Coordinates = position,
+                        Normal = normal,
+                        TextureCoordinates = new Vector3(u, v, 0)
+                    };
+
+                    vertIdx++;
+                }
+            }
+
+            // Generate faces
+            int faceIdx = 0;
+            for (int ring = 0; ring < rings; ring++)
+            {
+                for (int segment = 0; segment < segments; segment++)
+                {
+                    int current = ring * (segments + 1) + segment;
+                    int next = current + segments + 1;
+
+                    // First triangle
+                    mesh.Faces[faceIdx++] = new Face(current, next, current + 1);
+                    
+                    // Second triangle
+                    mesh.Faces[faceIdx++] = new Face(current + 1, next, next + 1);
+                }
+            }
+
+            return mesh;
+        }
+
+        /// <summary>
         /// Load mesh from OBJ file.
         /// </summary>
         public static Mesh LoadObj(string filename)

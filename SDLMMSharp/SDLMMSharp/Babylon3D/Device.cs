@@ -420,6 +420,133 @@ namespace SDLMMSharp.Babylon3D
             Render(camera, new[] { mesh }, lightPosition);
         }
 
+        /// <summary>
+        /// Draw a single point sprite with texture and optional additive blending.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DrawPointSprite(Vector3 position, float size, Texture texture, int color, bool additive = false)
+        {
+            if (texture == null) return;
+
+            int cx = (int)position.X;
+            int cy = (int)position.Y;
+            int halfSize = (int)(size / 2.0f);
+
+            // Extract color components
+            int baseR = (color >> 16) & 0xFF;
+            int baseG = (color >> 8) & 0xFF;
+            int baseB = color & 0xFF;
+
+            // Draw textured quad centered on particle position
+            for (int dy = -halfSize; dy <= halfSize; dy++)
+            {
+                for (int dx = -halfSize; dx <= halfSize; dx++)
+                {
+                    int px = cx + dx;
+                    int py = cy + dy;
+
+                    // Bounds check
+                    if (px < 0 || py < 0 || px >= WorkingWidth || py >= WorkingHeight)
+                        continue;
+
+                    // Sample texture
+                    int tx = (int)(((float)(dx + halfSize) / size) * texture.Width);
+                    int ty = (int)(((float)(dy + halfSize) / size) * texture.Height);
+
+                    if (tx < 0) tx = 0;
+                    if (ty < 0) ty = 0;
+                    if (tx >= texture.Width) tx = texture.Width - 1;
+                    if (ty >= texture.Height) ty = texture.Height - 1;
+
+                    int texColor = texture.InternalBuffer[ty * texture.Width + tx];
+                    int texAlpha = (texColor >> 24) & 0xFF;
+
+                    if (texAlpha == 0) continue;
+
+                    // Apply texture intensity to base color
+                    float intensity = texAlpha / 255.0f;
+                    int r = (int)(baseR * intensity);
+                    int g = (int)(baseG * intensity);
+                    int b = (int)(baseB * intensity);
+
+                    int finalColor = (0xFF << 24) | (r << 16) | (g << 8) | b;
+
+                    int idx = py * WorkingWidth + px;
+
+                    if (additive)
+                    {
+                        // Additive blending
+                        int existingColor = BackBuffer[idx];
+                        int existingR = (existingColor >> 16) & 0xFF;
+                        int existingG = (existingColor >> 8) & 0xFF;
+                        int existingB = existingColor & 0xFF;
+
+                        r = Math.Min(255, existingR + r);
+                        g = Math.Min(255, existingG + g);
+                        b = Math.Min(255, existingB + b);
+
+                        finalColor = (0xFF << 24) | (r << 16) | (g << 8) | b;
+                    }
+
+                    BackBuffer[idx] = finalColor;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Render multiple particles with camera projection.
+        /// Particles are rendered as point sprites with perspective scaling.
+        /// </summary>
+        public void RenderParticles(Camera camera, Vector3[] positions, int[] colors, float spriteSize, Texture spriteTexture, bool additive = false)
+        {
+            if (camera == null || positions == null || spriteTexture == null) return;
+
+            // Build view and projection matrices
+            Vector3 up = Vector3.Up;
+            Matrix viewMatrix = Matrix.LookAtLH(camera.Position, camera.Target, up);
+            Matrix projectionMatrix = Matrix.PerspectiveFovLH(0.78f, (float)WorkingWidth / WorkingHeight, 0.01f, 1000.0f);
+            Matrix viewProj = viewMatrix * projectionMatrix;
+
+            // Render each particle
+            for (int i = 0; i < positions.Length; i++)
+            {
+                Vector3 worldPos = positions[i];
+
+                // Transform to view space first to get actual distance
+                Vector3 viewPos = worldPos.TransformCoordinates(viewMatrix);
+
+                // In LH system, positive Z is forward from camera
+                // Skip particles behind camera or too close
+                if (viewPos.Z <= 0.1f) continue;
+
+                // Transform to clip space (already includes perspective divide)
+                Vector3 clipPos = worldPos.TransformCoordinates(viewProj);
+
+                // clipPos is now in NDC space (-1 to 1)
+                // Check if roughly on screen (with some margin for large sprites)
+                if (clipPos.X < -2.0f || clipPos.X > 2.0f || clipPos.Y < -2.0f || clipPos.Y > 2.0f)
+                    continue;
+
+                // Project to screen space
+                float screenX = (clipPos.X + 1.0f) * 0.5f * WorkingWidth;
+                float screenY = (1.0f - clipPos.Y) * 0.5f * WorkingHeight;
+
+                // Scale sprite size based on distance (perspective)
+                // Larger distance = smaller sprite
+                float distScale = 50.0f / viewPos.Z;  // Adjusted: base size at distance 50
+                float finalSize = spriteSize * distScale;
+
+                // Clamp size for visibility and performance
+                if (finalSize < 3.0f) finalSize = 3.0f;
+                if (finalSize > 80.0f) finalSize = 80.0f;
+
+                Vector3 screenPos = new Vector3(screenX, screenY, viewPos.Z);
+                int particleColor = colors != null && i < colors.Length ? colors[i] : 0xFFFFFF;
+
+                DrawPointSprite(screenPos, finalSize, spriteTexture, particleColor, additive);
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);

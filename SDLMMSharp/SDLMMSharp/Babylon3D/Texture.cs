@@ -87,6 +87,44 @@ namespace SDLMMSharp.Babylon3D
             return InternalBuffer[x + y * Width];
         }
 
+        /// <summary>
+        /// Create a Gaussian texture for soft particle sprites.
+        /// Uses Hermite interpolation for smooth falloff.
+        /// </summary>
+        public static Texture CreateGaussian(int size)
+        {
+            Texture tex = new Texture(size, size);
+            float center = size / 2.0f;
+            float maxDist = size / 2.0f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - center;
+                    float dy = y - center;
+                    float dist = (float)Math.Sqrt(dx * dx + dy * dy) / maxDist;
+
+                    if (dist > 1.0f) dist = 1.0f;
+
+                    // Hermite interpolation for smooth falloff
+                    float t = dist;
+                    float u2 = t * t;
+                    float u3 = u2 * t;
+                    float B0 = 2 * u3 - 3 * u2 + 1;  // Hermite basis
+
+                    float intensity = B0;
+                    if (intensity < 0.0f) intensity = 0.0f;
+
+                    // Store as grayscale with alpha
+                    int alpha = (int)(intensity * 255.0f);
+                    tex.InternalBuffer[y * size + x] = (alpha << 24) | (alpha << 16) | (alpha << 8) | alpha;
+                }
+            }
+
+            return tex;
+        }
+
         public void Dispose()
         {
             Dispose(true);
