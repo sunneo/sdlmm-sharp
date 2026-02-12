@@ -259,7 +259,7 @@ namespace SDLMMSharp.Babylon3D
                 {
                     X = (float)(random.NextDouble() * (MAX_X_AXIS - MIN_X_AXIS) + MIN_X_AXIS),
                     Y = (float)(random.NextDouble() * (MAX_Y_AXIS - MIN_Y_AXIS) + MIN_Y_AXIS),
-                    Z = (float)(random.NextDouble() * (MAX_Y_AXIS - MIN_Y_AXIS) + MIN_Y_AXIS),
+                    Z = (float)(random.NextDouble() * (MAX_Z_AXIS - MIN_Z_AXIS) + MIN_Z_AXIS),
                     VX = 0,
                     VY = 0,
                     VZ = 0,
@@ -270,8 +270,8 @@ namespace SDLMMSharp.Babylon3D
 
         private float Clamp(float v, float minv, float maxv)
         {
-            if (v > maxv) v = (v + maxv) / 2;
-            if (v < minv) v = (v + minv) / 2;
+            if (v > maxv) return maxv;
+            if (v < minv) return minv;
             return v;
         }
 

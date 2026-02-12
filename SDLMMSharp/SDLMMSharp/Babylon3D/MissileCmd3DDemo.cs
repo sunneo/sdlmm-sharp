@@ -369,7 +369,8 @@ namespace SDLMMSharp.Babylon3D
                     enemies[i].Y += enemies[i].DY;
 
                     // Check if reached target
-                    if ((int)(enemies[i].TX - enemies[i].X) <= 0 && 0 >= (int)(enemies[i].TY - enemies[i].Y))
+                    if (enemies[i].X >= enemies[i].TX - 1 && enemies[i].X <= enemies[i].TX + 1 &&
+                        enemies[i].Y >= enemies[i].TY - 1 && enemies[i].Y <= enemies[i].TY + 1)
                     {
                         enemies[i].Expl = true;
                         builds[enemies[i].TargetBuild].Alive = false;
@@ -476,8 +477,11 @@ namespace SDLMMSharp.Babylon3D
                 }
                 else
                 {
-                    // Draw explosion
-                    int explColor = unchecked((int)(random.Next() << 9));
+                    // Draw explosion - use bright yellow/orange colors
+                    int r = random.Next(200, 256);
+                    int g = random.Next(100, 200);
+                    int b = random.Next(0, 100);
+                    int explColor = unchecked((int)(0xff000000 | (r << 16) | (g << 8) | b));
                     gc.fillCircle((int)launchedMissiles[i].X, (int)launchedMissiles[i].Y, 
                                  launchedMissiles[i].R, explColor);
                 }
@@ -490,7 +494,11 @@ namespace SDLMMSharp.Babylon3D
 
                 if (enemies[i].Expl)
                 {
-                    int explColor = unchecked((int)((random.Next() << i) & 0xffee00 | 0xf0f000));
+                    // Generate random explosion color in yellow/orange/red range
+                    int r = random.Next(200, 256);
+                    int g = random.Next(100, 200);
+                    int b = 0;
+                    int explColor = unchecked((int)(0xff000000 | (r << 16) | (g << 8) | b));
                     gc.fillCircle((int)enemies[i].X, (int)enemies[i].Y, enemies[i].R, explColor);
                 }
                 else
