@@ -29,6 +29,18 @@ namespace SDLMMSharp
             Babylon3DCubeDemo frm = new Babylon3DCubeDemo();
             frm.Show(this);
         }
+
+        private void buttonNBody3D_Click(object sender, EventArgs e)
+        {
+            NBody3DDemo frm = new NBody3DDemo();
+            frm.Show(this);
+        }
+
+        private void buttonMissileCmd3D_Click(object sender, EventArgs e)
+        {
+            MissileCmd3DDemo frm = new MissileCmd3DDemo();
+            frm.Show(this);
+        }
     }
     internal class FormTestScene:Form
     {

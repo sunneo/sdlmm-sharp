@@ -146,12 +146,34 @@
             this.buttonOpenTestScene.UseVisualStyleBackColor = true;
             this.buttonOpenTestScene.Click += new System.EventHandler(this.buttonOpenTestScene_Click);
             // 
+            // buttonNBody3D
+            // 
+            this.buttonNBody3D.Location = new System.Drawing.Point(36, 311);
+            this.buttonNBody3D.Name = "buttonNBody3D";
+            this.buttonNBody3D.Size = new System.Drawing.Size(117, 23);
+            this.buttonNBody3D.TabIndex = 9;
+            this.buttonNBody3D.Text = "NBody 3D Demo";
+            this.buttonNBody3D.UseVisualStyleBackColor = true;
+            this.buttonNBody3D.Click += new System.EventHandler(this.buttonNBody3D_Click);
+            // 
+            // buttonMissileCmd3D
+            // 
+            this.buttonMissileCmd3D.Location = new System.Drawing.Point(36, 340);
+            this.buttonMissileCmd3D.Name = "buttonMissileCmd3D";
+            this.buttonMissileCmd3D.Size = new System.Drawing.Size(117, 23);
+            this.buttonMissileCmd3D.TabIndex = 10;
+            this.buttonMissileCmd3D.Text = "Missile Cmd 3D";
+            this.buttonMissileCmd3D.UseVisualStyleBackColor = true;
+            this.buttonMissileCmd3D.Click += new System.EventHandler(this.buttonMissileCmd3D_Click);
+            // 
             // SDLMMDemoForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(553, 509);
+            this.Controls.Add(this.buttonMissileCmd3D);
+            this.Controls.Add(this.buttonNBody3D);
             this.Controls.Add(this.buttonOpenTestScene);
             this.Controls.Add(this.sliderCheckbox3);
             this.Controls.Add(this.sliderCheckbox2);
@@ -171,6 +193,8 @@
         private CustomControl.SliderCheckbox sliderCheckbox2;
         private CustomControl.SliderCheckbox sliderCheckbox3;
         private System.Windows.Forms.Button buttonOpenTestScene;
+        private System.Windows.Forms.Button buttonNBody3D;
+        private System.Windows.Forms.Button buttonMissileCmd3D;
     }
 }
 

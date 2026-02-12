@@ -132,6 +132,12 @@
     <Compile Include="Babylon3D\Babylon3DCubeDemo.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Babylon3D\NBody3DDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Babylon3D\MissileCmd3DDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Babylon3D\SceneLoader.cs" />
     <Compile Include="Babylon3D\SceneViewerForm.cs">
       <SubType>Form</SubType>
