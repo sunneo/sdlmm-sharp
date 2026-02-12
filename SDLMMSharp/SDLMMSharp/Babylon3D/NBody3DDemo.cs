@@ -239,6 +239,8 @@ namespace SDLMMSharp.Babylon3D
         private const float MIN_X_AXIS = 0;
         private const float MAX_Y_AXIS = 1000;
         private const float MIN_Y_AXIS = 0;
+        private const float MAX_Z_AXIS = 1000;
+        private const float MIN_Z_AXIS = 0;
         private const float MAX_VELOCITY = 200;
         private const float MIN_VELOCITY = -200;
         private const float MAX_MASS = 150;
@@ -300,9 +302,15 @@ namespace SDLMMSharp.Babylon3D
             bodies[i].VY += sumY * simulateTime;
             bodies[i].VZ += sumZ * simulateTime;
 
-            bodies[i].X += Clamp(bodies[i].VX, MIN_VELOCITY, MAX_VELOCITY) * simulateTime;
-            bodies[i].Y += Clamp(bodies[i].VY, MIN_VELOCITY, MAX_VELOCITY) * simulateTime;
-            bodies[i].Z += Clamp(bodies[i].VZ, MIN_VELOCITY, MAX_VELOCITY) * simulateTime;
+            // Clamp velocities
+            bodies[i].VX = Clamp(bodies[i].VX, MIN_VELOCITY, MAX_VELOCITY);
+            bodies[i].VY = Clamp(bodies[i].VY, MIN_VELOCITY, MAX_VELOCITY);
+            bodies[i].VZ = Clamp(bodies[i].VZ, MIN_VELOCITY, MAX_VELOCITY);
+
+            // Update positions using clamped velocities
+            bodies[i].X += bodies[i].VX * simulateTime;
+            bodies[i].Y += bodies[i].VY * simulateTime;
+            bodies[i].Z += bodies[i].VZ * simulateTime;
         }
 
         public override void Update(float deltaTime = 0.016f)

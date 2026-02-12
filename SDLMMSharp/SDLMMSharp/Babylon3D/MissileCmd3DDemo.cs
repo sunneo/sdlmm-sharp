@@ -388,7 +388,7 @@ namespace SDLMMSharp.Babylon3D
                 if (!launchedMissiles[i].Expl)
                 {
                     if ((int)(launchedMissiles[i].TX - launchedMissiles[i].X) == 0 &&
-                        0 == (int)(launchedMissiles[i].TY - launchedMissiles[i].Y))
+                        (int)(launchedMissiles[i].TY - launchedMissiles[i].Y) == 0)
                     {
                         launchedMissiles[i].Expl = true;
                     }
